@@ -1,0 +1,22 @@
+# Ignore node modules (both frontend and backend)
+frontend/node_modules
+backend/node_modules
+
+con
+
+# Ignore certs from local – because they are generated in Docker
+frontend/certs
+backend/certs
+
+# Lock files (optional – if not used inside Docker)
+pnpm-lock.yaml
+package-lock.json
+
+# Git and system files
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+
+# Local build output – already handled in Docker
+frontend/build
