@@ -46,7 +46,7 @@ Infrastructure & DevOps:
 
 3. FOLDER STRUCTURE
 ===================
-
+```
 consultation-app/
 ├── backend/                    # Backend Node.js application
 │   ├── auth/                   # Authentication utilities
@@ -90,6 +90,7 @@ consultation-app/
 │   └── package.json         # Frontend dependencies
 ├── Dockerfile               # Multi-stage Docker build
 └── consultation-app.tar     # Application archive
+```
 
 4. APPLICATION FEATURES
 =======================
@@ -578,7 +579,7 @@ Infrastructure Improvements:
 
 ================================================================
 Document Version: 1.0
-Last Updated: December 2024
-Maintained By: Development Team
+Last Updated: July 2025
+Maintained By: APH Development Team
 Review Cycle: Quarterly
 ================================================================ 
