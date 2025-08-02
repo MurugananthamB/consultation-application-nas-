@@ -68,6 +68,8 @@ const Report = () => {
     uhidId: "",
     attenderName: "",
     icuConsultantName: "",
+    department: "",
+    conditionType: "",
   });
 
   // ✅ Helper function to validate and extract consultation data
@@ -286,16 +288,20 @@ const Report = () => {
       // Create new PDF document in A4 size
       const doc = new jsPDF("p", "mm", "a4");
 
-      // Add title only
+      // Add title with timestamp
+      const now = new Date();
+      const timestamp = now.toLocaleDateString('en-GB') + ' ' + now.toLocaleTimeString('en-GB');
       doc.setFontSize(16);
       doc.text("Consultation Report", 105, 10, { align: "center" });
+      doc.setFontSize(10);
+      doc.text(`Generated on: ${timestamp}`, 105, 18, { align: "center" });
 
       // Add table using autoTable
       autoTable(doc, {
-        startY: 15,
+        startY: 25,
         head: [
           [
-            "Date",
+            "Date & Time",
             "UHID",
             "Patient Name",
             "Department",
@@ -307,7 +313,15 @@ const Report = () => {
           ],
         ],
         body: consultations.map((item) => [
-          new Date(item.date).toLocaleDateString(),
+          new Date(item.date).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          }),
           item.uhidId || "-",
           item.patientName || "-",
           item.department || "-",
@@ -324,15 +338,15 @@ const Report = () => {
           fontStyle: "bold",
           halign: "center",
           valign: "middle",
-          fontSize: 9,
+          fontSize: 8,
           cellPadding: 2,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
-        margin: { left: 3, right: 3, top: 15 },
+        margin: { left: 3, right: 3, top: 25 },
         styles: {
-          fontSize: 8,
+          fontSize: 7,
           cellPadding: 1,
           overflow: "linebreak",
           halign: "center",
@@ -340,15 +354,15 @@ const Report = () => {
           lineWidth: 0.1,
         },
         columnStyles: {
-          0: { cellWidth: 18 }, // Date
+          0: { cellWidth: 22 }, // Date & Time
           1: { cellWidth: 15 }, // UHID
-          2: { cellWidth: 25 }, // Patient Name
-          3: { cellWidth: 20 }, // Department
-          4: { cellWidth: 20 }, // Doctor
-          5: { cellWidth: 20 }, // Attender
-          6: { cellWidth: 20 }, // ICU Consultant
-          7: { cellWidth: 18 }, // Duration
-          8: { cellWidth: 15 }, // Condition
+          2: { cellWidth: 22 }, // Patient Name
+          3: { cellWidth: 18 }, // Department
+          4: { cellWidth: 18 }, // Doctor
+          5: { cellWidth: 18 }, // Attender
+          6: { cellWidth: 18 }, // ICU Consultant
+          7: { cellWidth: 15 }, // Duration
+          8: { cellWidth: 12 }, // Condition
         },
         tableWidth: "wrap",
         horizontalPageBreak: false,
@@ -364,8 +378,9 @@ const Report = () => {
         },
       });
 
-      // Save the PDF
-      doc.save("consultation_report.pdf");
+      // Save the PDF with timestamp
+      const fileName = `Consultation_Report_${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}.pdf`;
+      doc.save(fileName);
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
@@ -373,19 +388,46 @@ const Report = () => {
   };
 
   const exportToExcel = () => {
+    // Add timestamp to filename
+    const now = new Date();
+    const fileName = `Consultation_Report_${now.getDate().toString().padStart(2, '0')}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getFullYear()}.xlsx`;
+    
     const worksheet = XLSX.utils.json_to_sheet(
       consultations.map((item) => ({
-        Date: new Date(item.date).toLocaleDateString(),
-        UHID: item.uhidId,
-        "Patient Name": item.patientName,
-        Department: item.department,
-        Doctor: item.doctorName,
-        Attender: item.attenderName,
-        "ICU Consultant": item.icuConsultantName,
-        Duration: `${item.recordingDuration} seconds`,
-        Condition: item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
+        "Date & Time": new Date(item.date).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true
+        }),
+        "UHID": item.uhidId || "-",
+        "Patient Name": item.patientName || "-",
+        "Department": item.department || "-",
+        "Doctor": item.doctorName || "-",
+        "Attender": item.attenderName || "-",
+        "ICU Consultant": item.icuConsultantName || "-",
+        "Duration": `${item.recordingDuration || 0} seconds`,
+        "Condition": item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
       }))
     );
+
+    // Set column widths for better readability
+    const columnWidths = [
+      { wch: 20 }, // Date & Time
+      { wch: 12 }, // UHID
+      { wch: 20 }, // Patient Name
+      { wch: 15 }, // Department
+      { wch: 15 }, // Doctor
+      { wch: 15 }, // Attender
+      { wch: 15 }, // ICU Consultant
+      { wch: 12 }, // Duration
+      { wch: 10 }, // Condition
+    ];
+    worksheet['!cols'] = columnWidths;
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Consultations");
     const excelBuffer = XLSX.write(workbook, {
@@ -395,7 +437,7 @@ const Report = () => {
     const data = new Blob([excelBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
-    saveAs(data, "consultation_report.xlsx");
+    saveAs(data, fileName);
   };
 
   // Function to format date to DD-MM-YYYY
@@ -588,6 +630,8 @@ const Report = () => {
       uhidId: consultation.uhidId || "",
       attenderName: consultation.attenderName || "",
       icuConsultantName: consultation.icuConsultantName || "",
+      department: consultation.department || "",
+      conditionType: consultation.conditionType || "",
     });
     setShowEditModal(true);
   };
@@ -960,11 +1004,14 @@ const Report = () => {
                           onClick={clearFilters}
                           disabled={loading}
                           style={{
-                            borderRadius: "10px",
-                            padding: "12px 30px",
+                            borderRadius: "8px",
+                            padding: "8px 12px",
                             fontWeight: "500",
                             border: "2px solid #6c757d",
                             minWidth: "120px",
+                            fontSize: "0.9rem",
+                            height: "auto",
+                            lineHeight: "1.2",
                           }}
                         >
                           Clear Filters
@@ -974,13 +1021,16 @@ const Report = () => {
                           onClick={applyFilters}
                           disabled={loading}
                           style={{
-                            borderRadius: "10px",
-                            padding: "12px 30px",
+                            borderRadius: "8px",
+                            padding: "8px 12px",
                             fontWeight: "500",
                             background:
                               "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                             border: "none",
                             minWidth: "150px",
+                            fontSize: "0.9rem",
+                            height: "auto",
+                            lineHeight: "1.2",
                           }}
                         >
                           {loading ? (
@@ -1812,15 +1862,83 @@ const Report = () => {
           </Modal.Header>
           <Modal.Body>
             <Form>
+              {/* 1. UHID - Read Only */}
               <Form.Group className="mb-3">
-                <Form.Label>Patient Name</Form.Label>
+                <Form.Label>
+                   UHID <small className="text-muted">(Read Only)</small>
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  name="uhidId"
+                  value={editForm.uhidId}
+                  readOnly
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    border: "2px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
+                />
+              </Form.Group>
+
+              {/* 2. Patient Name - Read Only */}
+              <Form.Group className="mb-3">
+                <Form.Label>
+                   Patient Name <small className="text-muted">(Read Only)</small>
+                </Form.Label>
                 <Form.Control
                   type="text"
                   name="patientName"
                   value={editForm.patientName}
-                  onChange={handleEditFormChange}
+                  readOnly
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    border: "2px solid #e9ecef",
+                    borderRadius: "8px",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
                 />
               </Form.Group>
+
+              {/* 3. Department */}
+              <Form.Group className="mb-3">
+                <Form.Label>Department</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="department"
+                  value={editForm.department}
+                  onChange={handleEditFormChange}
+                  placeholder="Enter department"
+                  style={{
+                    borderRadius: "8px",
+                    border: "2px solid #e2e8f0",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
+                />
+              </Form.Group>
+
+              {/* 4. Attender Name */}
+              <Form.Group className="mb-3">
+                <Form.Label>Attender Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="attenderName"
+                  value={editForm.attenderName}
+                  onChange={handleEditFormChange}
+                  placeholder="Enter attender name"
+                  style={{
+                    borderRadius: "8px",
+                    border: "2px solid #e2e8f0",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
+                />
+              </Form.Group>
+
+              {/* 5. Doctor Name */}
               <Form.Group className="mb-3">
                 <Form.Label>Doctor Name</Form.Label>
                 <Form.Control
@@ -1828,27 +1946,17 @@ const Report = () => {
                   name="doctorName"
                   value={editForm.doctorName}
                   onChange={handleEditFormChange}
+                  placeholder="Enter doctor name"
+                  style={{
+                    borderRadius: "8px",
+                    border: "2px solid #e2e8f0",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
                 />
               </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>UHID</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="uhidId"
-                  value={editForm.uhidId}
-                  onChange={handleEditFormChange}
-                  readOnly // <-- Make UHID not editable
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Attender</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="attenderName"
-                  value={editForm.attenderName}
-                  onChange={handleEditFormChange}
-                />
-              </Form.Group>
+
+              {/* 6. ICU Consultant */}
               <Form.Group className="mb-3">
                 <Form.Label>ICU Consultant</Form.Label>
                 <Form.Control
@@ -1856,9 +1964,36 @@ const Report = () => {
                   name="icuConsultantName"
                   value={editForm.icuConsultantName}
                   onChange={handleEditFormChange}
+                  placeholder="Enter ICU consultant name"
+                  style={{
+                    borderRadius: "8px",
+                    border: "2px solid #e2e8f0",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
                 />
               </Form.Group>
 
+              {/* 7. Condition Type */}
+              <Form.Group className="mb-3">
+                <Form.Label>🛏️ Condition Type</Form.Label>
+                <Form.Select
+                  name="conditionType"
+                  value={editForm.conditionType}
+                  onChange={handleEditFormChange}
+                  style={{
+                    borderRadius: "8px",
+                    border: "2px solid #e2e8f0",
+                    fontSize: "0.9rem",
+                    padding: "8px 12px",
+                  }}
+                >
+                  <option value="">Select Condition Type</option>
+                  <option value="normal">🟢 Normal</option>
+                  <option value="icu">⚠️ ICU</option>
+                  <option value="critical">🚨 Critical</option>
+                </Form.Select>
+              </Form.Group>
             </Form>
           </Modal.Body>
           <Modal.Footer>
