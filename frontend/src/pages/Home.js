@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios"; // ✅ FIXED
 import { useAuth } from "../context/AuthContext";
 import fixWebmDuration from "webm-duration-fix";
+import UserProfileCard from "../components/UserProfileCard";
+import UserMenuButton from "../components/UserMenuButton";
+import EditProfileModal from "../components/EditProfileModal";
 
 import {
   Container,
@@ -30,6 +33,9 @@ import {
   FaStop,
   FaSpinner,
   FaCode,
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaExclamationCircle,
 } from "react-icons/fa";
 import {
   consultationAPI,
@@ -49,6 +55,7 @@ const Home = () => {
     icuConsultantName: "DR SHARMILA",
     doctorName: "",
     department: "",
+    conditionType: "", // New field for condition selection
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,6 +79,8 @@ const Home = () => {
   });
   const [patientLoading, setPatientLoading] = useState(false);
   const [patientError, setPatientError] = useState("");
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   // Fetch storage path when component mounts
   useEffect(() => {
@@ -110,6 +119,14 @@ const Home = () => {
     if (e.target.name === "uhidId" && !e.target.value.trim()) {
       setPatientError("");
     }
+  };
+
+  const handleConditionChange = (condition) => {
+    // Single selection behavior - only one can be selected at a time
+    setFormData({
+      ...formData,
+      conditionType: condition,
+    });
   };
 
   const startRecording = async () => {
@@ -221,6 +238,7 @@ const Home = () => {
           attenderName: formData.attenderName,
           icuConsultantName: formData.icuConsultantName,
           department: formData.department,
+          conditionType: formData.conditionType,
           date: new Date().toISOString(),
           recordingDuration: recordingTime,
           status: "completed",
@@ -247,6 +265,7 @@ const Home = () => {
           icuConsultantName: "",
           doctorName: "",
           department: "",
+          conditionType: "",
         });
         setShowVideo(false);
         setRecordingTime(0);
@@ -336,6 +355,47 @@ const Home = () => {
     logout();
     navigate("/doctor-login");
   };
+
+  const toggleUserProfile = () => {
+    setShowUserProfile(!showUserProfile);
+  };
+
+  const closeUserProfile = () => {
+    setShowUserProfile(false);
+  };
+
+  const handleEditProfile = () => {
+    setShowEditProfile(true);
+    setShowUserProfile(false); // Close profile dropdown when opening edit modal
+  };
+
+  const handleSaveProfile = (updatedData) => {
+    // TODO: Implement actual profile update logic
+    console.log("Profile updated:", updatedData);
+    setSuccess("Profile updated successfully!");
+    setShowEditProfile(false);
+  };
+
+  // Handle click outside to close profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showUserProfile) {
+        // Check if click is outside the user menu button and profile card
+        const userMenuButton = document.querySelector('[data-user-menu]');
+        const profileCard = document.querySelector('[data-profile-card]');
+        
+        if (userMenuButton && !userMenuButton.contains(event.target) &&
+            profileCard && !profileCard.contains(event.target)) {
+          setShowUserProfile(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserProfile]);
 
   const handleStorageSettings = async () => {
     if (user?.role !== "admin") return;
@@ -457,7 +517,7 @@ const Home = () => {
                     }}
                   >
                     <Card.Body className="p-4">
-                      <div className="d-flex justify-content-between align-items-center mb-4">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
                         <motion.div
                           initial={{ x: -20, opacity: 0 }}
                           animate={{ x: 0, opacity: 1 }}
@@ -488,17 +548,9 @@ const Home = () => {
                           <Button
                             variant="primary"
                             onClick={() => navigate("/report")}
-                            className="me-2"
                           >
                             <FaFileAlt className="me-2" />
                             Reports
-                          </Button>
-                          <Button
-                            variant="outline-danger"
-                            onClick={handleLogout}
-                          >
-                            <FaSignOutAlt className="me-2" />
-                            Logout
                           </Button>
                         </motion.div>
                       </div>
@@ -538,7 +590,7 @@ const Home = () => {
                             transition={{ duration: 0.3 }}
                             key="error"
                           >
-                            <Alert variant="danger" className="mb-4">
+                            <Alert variant="danger" className="mb-3">
                               {error}
                             </Alert>
                           </motion.div>
@@ -551,7 +603,7 @@ const Home = () => {
                             transition={{ duration: 0.3 }}
                             key="success"
                           >
-                            <Alert variant="success" className="mb-4">
+                            <Alert variant="success" className="mb-3">
                               {success}
                             </Alert>
                           </motion.div>
@@ -564,7 +616,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.6, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-3">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">UHID</Form.Label>
                             <div className="input-group">
                               <span className="input-group-text bg-white border-end-0">
@@ -579,7 +631,7 @@ const Home = () => {
                                 required
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
                                     e.preventDefault();
@@ -601,7 +653,7 @@ const Home = () => {
                               transition={{ duration: 0.3 }}
                               key="patient-loading"
                             >
-                              <Alert variant="info" className="mb-3">
+                              <Alert variant="info" className="mb-2">
                                 <FaSpinner className="me-2 fa-spin" />
                                 Loading patient information...
                               </Alert>
@@ -616,7 +668,7 @@ const Home = () => {
                               transition={{ duration: 0.3 }}
                               key="patient-error"
                             >
-                              <Alert variant="danger" className="mb-3">
+                              <Alert variant="danger" className="mb-2">
                                 <FaUser className="me-2" />
                                 {patientError}
                               </Alert>
@@ -629,7 +681,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.7, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-3">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">
                               Patient Name
                             </Form.Label>
@@ -646,7 +698,7 @@ const Home = () => {
                                 required
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                               />
                             </div>
                           </Form.Group>
@@ -657,7 +709,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.8, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-3">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">
                               Department
                             </Form.Label>
@@ -673,7 +725,7 @@ const Home = () => {
                                 placeholder="Enter department"
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                               />
                             </div>
                           </Form.Group>
@@ -684,7 +736,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.9, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-3">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">
                               Attender Name
                             </Form.Label>
@@ -700,7 +752,7 @@ const Home = () => {
                                 placeholder="Enter attender name"
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                               />
                             </div>
                           </Form.Group>
@@ -711,7 +763,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 0.9, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-3">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">
                               Doctor Name
                             </Form.Label>
@@ -727,8 +779,139 @@ const Home = () => {
                                 placeholder="Enter doctor name"
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                               />
+                            </div>
+                          </Form.Group>
+                        </motion.div>
+
+                                                {/* Condition Type Cards */}
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.95, duration: 0.5 }}
+                        >
+                          <Form.Group className="mb-2">
+                            <Form.Label className="fw-bold">
+                              Condition Type
+                            </Form.Label>
+                            <div className="row g-2">
+                              {[
+                                { 
+                                  value: "normal", 
+                                  label: "Normal", 
+                                  color: "success", 
+                                  icon: FaCheckCircle,
+                                  gradient: "from-green-50 to-green-100",
+                                  borderColor: "border-success",
+                                  textColor: "text-success",
+                                  selectedBg: "bg-success",
+                                  selectedText: "text-white"
+                                },
+                                { 
+                                  value: "icu", 
+                                  label: "ICU", 
+                                  color: "warning", 
+                                  icon: FaExclamationTriangle,
+                                  gradient: "from-yellow-50 to-yellow-100",
+                                  borderColor: "border-warning",
+                                  textColor: "text-warning",
+                                  selectedBg: "bg-warning",
+                                  selectedText: "text-white"
+                                },
+                                { 
+                                  value: "critical", 
+                                  label: "Critical", 
+                                  color: "danger", 
+                                  icon: FaExclamationCircle,
+                                  gradient: "from-red-50 to-red-100",
+                                  borderColor: "border-danger",
+                                  textColor: "text-danger",
+                                  selectedBg: "bg-danger",
+                                  selectedText: "text-white"
+                                },
+                              ].map((option) => {
+                                const IconComponent = option.icon;
+                                const isSelected = formData.conditionType === option.value;
+                                return (
+                                  <div key={option.value} className="col-12 col-md-4">
+                                    <motion.div
+                                      whileHover={{ 
+                                        scale: isRecording ? 1 : 1.02,
+                                        y: isRecording ? 0 : -2
+                                      }}
+                                      whileTap={{ scale: isRecording ? 1 : 0.98 }}
+                                      animate={{
+                                        scale: isSelected ? 1.02 : 1,
+                                      }}
+                                      onClick={() => !isRecording && handleConditionChange(option.value)}
+                                      className={`card h-100 border-0 shadow-sm position-relative overflow-hidden ${
+                                        isSelected 
+                                          ? `${option.selectedBg} ${option.selectedText} shadow-lg` 
+                                          : `bg-white ${option.textColor}`
+                                      }`}
+                                      style={{
+                                        cursor: isRecording ? "not-allowed" : "pointer",
+                                        transition: "all 0.3s ease",
+                                        border: isSelected ? "2px solid transparent" : "2px solid #e9ecef",
+                                        background: isSelected 
+                                          ? `linear-gradient(135deg, var(--bs-${option.color}) 0%, var(--bs-${option.color}-dark) 100%)`
+                                          : `linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)`,
+                                        minHeight: "64px"
+                                      }}
+                                    >
+                                      {/* Background gradient overlay */}
+                                      {!isSelected && (
+                                        <div 
+                                          className="position-absolute w-100 h-100 opacity-10"
+                                          style={{
+                                            background: `linear-gradient(135deg, var(--bs-${option.color}) 0%, var(--bs-${option.color}-light) 100%)`,
+                                            top: 0,
+                                            left: 0,
+                                            zIndex: 0
+                                          }}
+                                        />
+                                      )}
+                                      
+                                      <div className="card-body d-flex flex-column align-items-center justify-content-center py-1 px-2 position-relative" style={{ zIndex: 1 }}>
+                                        <div className="text-center">
+                                          <div className="mb-1">
+                                            <IconComponent 
+                                              size={18} 
+                                              className={isSelected ? "text-white" : option.textColor}
+                                            />
+                                          </div>
+                                          <h6 className={`fw-bold mb-0 ${isSelected ? "text-white" : option.textColor}`} style={{ fontSize: "0.8rem" }}>
+                                            {option.label}
+                                          </h6>
+                                          {isSelected && (
+                                            <motion.div
+                                              initial={{ opacity: 0, scale: 0.8 }}
+                                              animate={{ opacity: 1, scale: 1 }}
+                                              className="mt-1"
+                                            >
+                                              <small className="text-white-50" style={{ fontSize: "0.65rem" }}>✓ Selected</small>
+                                            </motion.div>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Selection indicator */}
+                                      {isSelected && (
+                                        <motion.div
+                                          initial={{ opacity: 0, scale: 0 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          className="position-absolute top-0 end-0 m-1"
+                                        >
+                                          <div className="bg-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: "18px", height: "18px" }}>
+                                            <FaCheckCircle size={8} className="text-success" />
+                                          </div>
+                                        </motion.div>
+                                      )}
+                                    </motion.div>
+                                  </div>
+                                );
+                              })}
                             </div>
                           </Form.Group>
                         </motion.div>
@@ -738,7 +921,7 @@ const Home = () => {
                           animate={{ x: 0, opacity: 1 }}
                           transition={{ delay: 1.0, duration: 0.5 }}
                         >
-                          <Form.Group className="mb-4">
+                          <Form.Group className="mb-2">
                             <Form.Label className="fw-bold">
                               ICU Consultant
                             </Form.Label>
@@ -754,7 +937,7 @@ const Home = () => {
                                 placeholder="Enter ICU consultant name"
                                 disabled={isRecording}
                                 className="border-start-0"
-                                style={{ height: "50px" }}
+                                style={{ height: "45px" }}
                               />
                             </div>
                           </Form.Group>
@@ -764,7 +947,7 @@ const Home = () => {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ delay: 1.1, duration: 0.5 }}
-                          className="mb-4"
+                          className="mb-3"
                         >
                           <div className="d-flex justify-content-center gap-3">
                             {!isRecording ? (
@@ -935,6 +1118,30 @@ const Home = () => {
           </span>
         </footer>
       </div>
+
+      {/* User Menu Button */}
+      <UserMenuButton
+        isOpen={showUserProfile}
+        onToggle={toggleUserProfile}
+        user={user}
+      />
+
+      {/* User Profile Card Dropdown */}
+      <UserProfileCard
+        isOpen={showUserProfile}
+        onClose={closeUserProfile}
+        onLogout={handleLogout}
+        onEditProfile={handleEditProfile}
+        user={user}
+      />
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        show={showEditProfile}
+        onHide={() => setShowEditProfile(false)}
+        onSave={handleSaveProfile}
+        user={user}
+      />
     </>
   );
 };
