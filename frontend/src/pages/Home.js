@@ -785,6 +785,33 @@ const Home = () => {
                           </Form.Group>
                         </motion.div>
 
+                        <motion.div
+                          initial={{ x: -20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 1.0, duration: 0.5 }}
+                        >
+                          <Form.Group className="mb-2">
+                            <Form.Label className="fw-bold">
+                              ICU Consultant
+                            </Form.Label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white border-end-0">
+                                <FaUserMd className="text-primary" />
+                              </span>
+                              <Form.Control
+                                type="text"
+                                name="icuConsultantName"
+                                value={formData.icuConsultantName}
+                                onChange={handleChange}
+                                placeholder="Enter ICU consultant name"
+                                disabled={isRecording}
+                                className="border-start-0"
+                                style={{ height: "45px" }}
+                              />
+                            </div>
+                          </Form.Group>
+                        </motion.div>
+
                                                 {/* Condition Type Cards */}
                         <motion.div
                           initial={{ x: -20, opacity: 0 }}
@@ -916,32 +943,7 @@ const Home = () => {
                           </Form.Group>
                         </motion.div>
 
-                        <motion.div
-                          initial={{ x: -20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ delay: 1.0, duration: 0.5 }}
-                        >
-                          <Form.Group className="mb-2">
-                            <Form.Label className="fw-bold">
-                              ICU Consultant
-                            </Form.Label>
-                            <div className="input-group">
-                              <span className="input-group-text bg-white border-end-0">
-                                <FaUserMd className="text-primary" />
-                              </span>
-                              <Form.Control
-                                type="text"
-                                name="icuConsultantName"
-                                value={formData.icuConsultantName}
-                                onChange={handleChange}
-                                placeholder="Enter ICU consultant name"
-                                disabled={isRecording}
-                                className="border-start-0"
-                                style={{ height: "45px" }}
-                              />
-                            </div>
-                          </Form.Group>
-                        </motion.div>
+                        
 
                         <motion.div
                           initial={{ y: 20, opacity: 0 }}

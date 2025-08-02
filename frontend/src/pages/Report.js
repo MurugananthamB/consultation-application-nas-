@@ -46,6 +46,7 @@ const Report = () => {
     doctorName: "",
     uhidId: "",
     department: "",
+    conditionType: "",
   });
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +68,6 @@ const Report = () => {
     uhidId: "",
     attenderName: "",
     icuConsultantName: "",
-    status: "",
   });
 
   // ✅ Helper function to validate and extract consultation data
@@ -177,6 +177,7 @@ const Report = () => {
           patientName: filters.patientName,
           department: filters.department,
           doctorName: filters.doctorName,
+          conditionType: filters.conditionType,
           sortField: sortConfig.field,
           sortDirection: sortConfig.direction,
         },
@@ -267,6 +268,7 @@ const Report = () => {
       doctorName: "",
       uhidId: "",
       department: "",
+      conditionType: "",
     });
     setCurrentPage(1);
     console.log("🧹 Clearing filters, reset to page 1");
@@ -301,7 +303,7 @@ const Report = () => {
             "Attender",
             "ICU Consultant",
             "Duration",
-            "Status",
+            "Condition",
           ],
         ],
         body: consultations.map((item) => [
@@ -313,7 +315,7 @@ const Report = () => {
           item.attenderName || "-",
           item.icuConsultantName || "-",
           `${item.recordingDuration || 0} seconds`,
-          item.status || "-",
+          item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
         ]),
         theme: "grid",
         headStyles: {
@@ -346,7 +348,7 @@ const Report = () => {
           5: { cellWidth: 20 }, // Attender
           6: { cellWidth: 20 }, // ICU Consultant
           7: { cellWidth: 18 }, // Duration
-          8: { cellWidth: 18 }, // Status
+          8: { cellWidth: 15 }, // Condition
         },
         tableWidth: "wrap",
         horizontalPageBreak: false,
@@ -381,7 +383,7 @@ const Report = () => {
         Attender: item.attenderName,
         "ICU Consultant": item.icuConsultantName,
         Duration: `${item.recordingDuration} seconds`,
-        Status: item.status,
+        Condition: item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
       }))
     );
     const workbook = XLSX.utils.book_new();
@@ -586,7 +588,6 @@ const Report = () => {
       uhidId: consultation.uhidId || "",
       attenderName: consultation.attenderName || "",
       icuConsultantName: consultation.icuConsultantName || "",
-      status: consultation.status || "",
     });
     setShowEditModal(true);
   };
@@ -794,11 +795,11 @@ const Report = () => {
                     <FaFilter className="me-2" />
                     Filters
                   </h5>
-                  <Row>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                  <div className="d-flex flex-wrap gap-3 mb-3" style={{ overflowX: "auto" }}>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           Date From
                         </Form.Label>
@@ -810,14 +811,16 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           Date To
                         </Form.Label>
@@ -829,14 +832,16 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           Patient Name
                         </Form.Label>
@@ -849,14 +854,16 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           Doctor Name
                         </Form.Label>
@@ -869,14 +876,16 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           UHID
                         </Form.Label>
@@ -889,14 +898,16 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                    <Col md={2}>
-                      <Form.Group className="mb-3">
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
                         <Form.Label
-                          style={{ fontWeight: "500", color: "#4a5568" }}
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
                           Department
                         </Form.Label>
@@ -909,11 +920,38 @@ const Report = () => {
                           style={{
                             borderRadius: "8px",
                             border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
                           }}
                         />
                       </Form.Group>
-                    </Col>
-                  </Row>
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
+                        <Form.Label
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
+                        >
+                          🛏️ Condition
+                        </Form.Label>
+                        <Form.Select
+                          name="conditionType"
+                          value={filters.conditionType}
+                          onChange={handleFilterChange}
+                          style={{
+                            borderRadius: "8px",
+                            border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <option value="">All Conditions</option>
+                          <option value="normal">🟢 Normal</option>
+                          <option value="icu">⚠️ ICU</option>
+                          <option value="critical">🚨 Critical</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </div>
+                  </div>
                   <Row>
                     <Col md={12}>
                       <div className="d-flex justify-content-end gap-3">
@@ -1228,7 +1266,7 @@ const Report = () => {
                             minWidth: "160px",
                           }}
                         >
-                          🏥 ICU Consultant
+                          ⚕️ ICU Consultant
                         </th>
                         <th
                           onClick={() => handleSort("recordingDuration")}
@@ -1244,20 +1282,22 @@ const Report = () => {
                           {sortConfig.field === "recordingDuration" &&
                             (sortConfig.direction === "asc" ? "↑" : "↓")}
                         </th>
+
                         <th
-                          onClick={() => handleSort("status")}
+                          onClick={() => handleSort("conditionType")}
                           style={{
                             cursor: "pointer",
                             padding: "15px",
                             border: "none",
-                            width: "100px",
-                            minWidth: "100px",
+                            width: "120px",
+                            minWidth: "120px",
                           }}
                         >
-                          📊 Status{" "}
-                          {sortConfig.field === "status" &&
+                          🛏️ Condition{" "}
+                          {sortConfig.field === "conditionType" &&
                             (sortConfig.direction === "asc" ? "↑" : "↓")}
                         </th>
+
                         <th
                           style={{
                             padding: "15px",
@@ -1441,19 +1481,24 @@ const Report = () => {
                               ⏱ {consultation.recordingDuration}s
                             </span>
                           </td>
+
                           <td
                             style={{
                               padding: "15px",
                               verticalAlign: "middle",
-                              width: "100px",
-                              minWidth: "100px",
+                              width: "120px",
+                              minWidth: "120px",
                             }}
                           >
                             <span
                               className={`badge ${
-                                consultation.status === "completed"
+                                consultation.conditionType === "normal"
                                   ? "bg-success"
-                                  : "bg-warning"
+                                  : consultation.conditionType === "icu"
+                                  ? "bg-warning"
+                                  : consultation.conditionType === "critical"
+                                  ? "bg-danger"
+                                  : "bg-secondary"
                               }`}
                               style={{
                                 padding: "6px 10px",
@@ -1461,14 +1506,23 @@ const Report = () => {
                                 fontSize: "0.75rem",
                                 whiteSpace: "nowrap",
                                 background:
-                                  consultation.status === "completed"
+                                  consultation.conditionType === "normal"
                                     ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                                    : "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                                    : consultation.conditionType === "icu"
+                                    ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
+                                    : consultation.conditionType === "critical"
+                                    ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
+                                    : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
+                                color: "white",
                               }}
                             >
-                              {consultation.status}
+                              {consultation.conditionType
+                                ? consultation.conditionType.charAt(0).toUpperCase() +
+                                  consultation.conditionType.slice(1)
+                                : "N/A"}
                             </span>
                           </td>
+
                           <td
                             style={{
                               padding: "15px",
@@ -1804,17 +1858,7 @@ const Report = () => {
                   onChange={handleEditFormChange}
                 />
               </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Status</Form.Label>
-                <Form.Select
-                  name="status"
-                  value={editForm.status}
-                  onChange={handleEditFormChange}
-                >
-                  <option value="completed">Completed</option>
-                  <option value="pending">Pending</option>
-                </Form.Select>
-              </Form.Group>
+
             </Form>
           </Modal.Body>
           <Modal.Footer>
