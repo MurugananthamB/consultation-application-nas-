@@ -243,6 +243,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/consultations", require("./routes/consultations"));
 app.use("/api", patientRoutes);
 app.use("/api", videoRoutes);
+app.use("/api/masters", verifyToken, require("./routes/masters"));
 
 // route
 // app.put('/api/consultations/:id', verifyToken, (req, res) => {

@@ -6,6 +6,7 @@ import fixWebmDuration from "webm-duration-fix";
 import UserProfileCard from "../components/UserProfileCard";
 import UserMenuButton from "../components/UserMenuButton";
 import EditProfileModal from "../components/EditProfileModal";
+import MultiSelect from "../components/MultiSelect";
 
 import {
   Container,
@@ -52,10 +53,10 @@ const Home = () => {
     patientName: "",
     uhidId: "",
     attenderName: "",
-    icuConsultantName: "DR SHARMILA",
-    doctorName: "",
+    icuConsultantName: [], // Changed to array for multiple selection
+    doctorName: [], // Changed to array for multiple selection
     department: "",
-    conditionType: "", // New field for condition selection
+    conditionType: "normal", // Default to Normal
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -81,6 +82,43 @@ const Home = () => {
   const [patientError, setPatientError] = useState("");
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  
+  // API states for Doctor and ICU Consultant
+  const [doctors, setDoctors] = useState([]);
+  const [doctorsLoading, setDoctorsLoading] = useState(false);
+  const [doctorsError, setDoctorsError] = useState("");
+  const [doctorsLoaded, setDoctorsLoaded] = useState(false);
+  
+  const [icuConsultants, setIcuConsultants] = useState([]);
+  const [icuConsultantsLoading, setIcuConsultantsLoading] = useState(false);
+  const [icuConsultantsError, setIcuConsultantsError] = useState("");
+  const [icuConsultantsLoaded, setIcuConsultantsLoaded] = useState(false);
+
+  // Sample doctor data for demonstration (fallback)
+  const sampleDoctors = [
+    { _id: '1', name: 'Dr. John Smith' },
+    { _id: '2', name: 'Dr. Sarah Johnson' },
+    { _id: '3', name: 'Dr. Michael Brown' },
+    { _id: '4', name: 'Dr. Emily Davis' },
+    { _id: '5', name: 'Dr. David Wilson' },
+    { _id: '6', name: 'Dr. Lisa Anderson' },
+    { _id: '7', name: 'Dr. Robert Taylor' },
+    { _id: '8', name: 'Dr. Jennifer Martinez' },
+  ];
+
+  // Sample ICU consultant data for demonstration (fallback)
+  const sampleIcuConsultants = [
+    { _id: 'ic1', name: 'Dr. James Wilson' },
+    { _id: 'ic2', name: 'Dr. Maria Garcia' },
+    { _id: 'ic3', name: 'Dr. Thomas Lee' },
+    { _id: 'ic4', name: 'Dr. Patricia Rodriguez' },
+    { _id: 'ic5', name: 'Dr. Christopher Moore' },
+    { _id: 'ic6', name: 'Dr. Amanda Thompson' },
+    { _id: 'ic7', name: 'Dr. Kevin Clark' },
+    { _id: 'ic8', name: 'Dr. Rachel Lewis' },
+  ];
+  
+  
 
   // Fetch storage path when component mounts
   useEffect(() => {
@@ -120,6 +158,82 @@ const Home = () => {
       setPatientError("");
     }
   };
+
+
+
+  // Handle doctor selection change
+  const handleDoctorChange = (selectedDoctors) => {
+    setFormData({
+      ...formData,
+      doctorName: selectedDoctors,
+    });
+  };
+
+  // Handle ICU consultant selection change
+  const handleIcuConsultantChange = (selectedConsultants) => {
+    setFormData({
+      ...formData,
+      icuConsultantName: selectedConsultants,
+    });
+  };
+
+  // Fetch doctors from API using api.js
+  const fetchDoctors = async () => {
+    if (doctorsLoaded) return; // Don't fetch if already loaded
+    
+    setDoctorsLoading(true);
+    setDoctorsError("");
+    
+    try {
+      const response = await api.get("/masters/doctors");
+      
+      // Backend returns array directly, not wrapped in success/data
+      if (response.data && Array.isArray(response.data)) {
+        setDoctors(response.data);
+        setDoctorsLoaded(true);
+      } else {
+        throw new Error("Invalid response format from doctors API");
+      }
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      setDoctorsError(error.response?.data?.message || error.message || "Failed to load doctors");
+      // Use sample data as fallback
+      setDoctors(sampleDoctors);
+      setDoctorsLoaded(true);
+    } finally {
+      setDoctorsLoading(false);
+    }
+  };
+
+  // Fetch ICU consultants from API using api.js
+  const fetchIcuConsultants = async () => {
+    if (icuConsultantsLoaded) return; // Don't fetch if already loaded
+    
+    setIcuConsultantsLoading(true);
+    setIcuConsultantsError("");
+    
+    try {
+      const response = await api.get("/masters/icu-consultants");
+      
+      // Backend returns array directly, not wrapped in success/data
+      if (response.data && Array.isArray(response.data)) {
+        setIcuConsultants(response.data);
+        setIcuConsultantsLoaded(true);
+      } else {
+        throw new Error("Invalid response format from ICU consultants API");
+      }
+    } catch (error) {
+      console.error("Error fetching ICU consultants:", error);
+      setIcuConsultantsError(error.response?.data?.message || error.message || "Failed to load ICU consultants");
+      // Use sample data as fallback
+      setIcuConsultants(sampleIcuConsultants);
+      setIcuConsultantsLoaded(true);
+    } finally {
+      setIcuConsultantsLoading(false);
+    }
+  };
+
+
 
   const handleConditionChange = (condition) => {
     // Single selection behavior - only one can be selected at a time
@@ -234,9 +348,9 @@ const Home = () => {
           patientName: formData.patientName,
           uhidId: formData.uhidId,
           doctor: user.id,
-          doctorName: formData.doctorName,
+          doctorName: formData.doctorName.map(doc => doc.label).join(', '), // Convert array to comma-separated string
           attenderName: formData.attenderName,
-          icuConsultantName: formData.icuConsultantName,
+          icuConsultantName: formData.icuConsultantName.map(consultant => consultant.label).join(', '), // Convert array to comma-separated string
           department: formData.department,
           conditionType: formData.conditionType,
           date: new Date().toISOString(),
@@ -262,10 +376,10 @@ const Home = () => {
           patientName: "",
           uhidId: "",
           attenderName: "",
-          icuConsultantName: "",
-          doctorName: "",
+          icuConsultantName: [], // Reset to empty array
+          doctorName: [], // Reset to empty array
           department: "",
-          conditionType: "",
+          conditionType: "normal", // Reset to default Normal
         });
         setShowVideo(false);
         setRecordingTime(0);
@@ -426,8 +540,8 @@ const Home = () => {
           patientName: res.data.data.patientName || "",
           uhidId: res.data.data.uhidId || uhid,
           attenderName: res.data.data.attenderName || "",
-          icuConsultantName: res.data.data.icuConsultantName || "",
-          doctorName: res.data.data.doctorName || "",
+          icuConsultantName: [], // Reset to empty array for new consultation
+          doctorName: [], // Reset to empty array for new consultation
           department: res.data.data.department || "",
         });
       }
@@ -462,6 +576,8 @@ const Home = () => {
           ...prev,
           patientName: response.data.name || "",
           department: response.data.department || "",
+          doctorName: [], // Reset doctor selection for new patient
+          icuConsultantName: [], // Reset ICU consultant selection for new patient
         }));
       }
     } catch (error) {
@@ -533,18 +649,6 @@ const Home = () => {
                           whileTap={{ scale: 0.9 }}
                           className="d-flex gap-2"
                         >
-                          {user?.role === "admin" && (
-                            <Button
-                              variant="outline-primary"
-                              onClick={() =>
-                                setShowStorageSettings(!showStorageSettings)
-                              }
-                              className="me-2"
-                            >
-                              <FaCog className="me-2" />
-                              Storage Settings
-                            </Button>
-                          )}
                           <Button
                             variant="primary"
                             onClick={() => navigate("/report")}
@@ -660,17 +764,85 @@ const Home = () => {
                             </motion.div>
                           )}
 
-                          {patientError && (
+                                                  {patientError && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.3 }}
+                            key="patient-error"
+                          >
+                            <Alert variant="danger" className="mb-2">
+                              <FaUser className="me-2" />
+                              {patientError}
+                            </Alert>
+                          </motion.div>
+                        )}
+                        
+
+                        </AnimatePresence>
+
+                        {/* Doctor Loading and Error States */}
+                        <AnimatePresence mode="sync">
+                          {doctorsLoading && (
                             <motion.div
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
                               transition={{ duration: 0.3 }}
-                              key="patient-error"
+                              key="doctors-loading"
                             >
-                              <Alert variant="danger" className="mb-2">
-                                <FaUser className="me-2" />
-                                {patientError}
+                              <Alert variant="info" className="mb-2">
+                                <FaSpinner className="me-2 fa-spin" />
+                                Loading doctors...
+                              </Alert>
+                            </motion.div>
+                          )}
+
+                          {doctorsError && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.3 }}
+                              key="doctors-error"
+                            >
+                              <Alert variant="warning" className="mb-2">
+                                <FaExclamationTriangle className="me-2" />
+                                {doctorsError}
+                              </Alert>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+
+                        {/* ICU Consultant Loading and Error States */}
+                        <AnimatePresence mode="sync">
+                          {icuConsultantsLoading && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.3 }}
+                              key="icu-loading"
+                            >
+                              <Alert variant="info" className="mb-2">
+                                <FaSpinner className="me-2 fa-spin" />
+                                Loading ICU consultants...
+                              </Alert>
+                            </motion.div>
+                          )}
+
+                          {icuConsultantsError && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.3 }}
+                              key="icu-error"
+                            >
+                              <Alert variant="warning" className="mb-2">
+                                <FaExclamationTriangle className="me-2" />
+                                {icuConsultantsError}
                               </Alert>
                             </motion.div>
                           )}
@@ -767,21 +939,19 @@ const Home = () => {
                             <Form.Label className="fw-bold">
                               Doctor Name
                             </Form.Label>
-                            <div className="input-group">
-                              <span className="input-group-text bg-white border-end-0">
-                                <FaUserMd className="text-primary" />
-                              </span>
-                              <Form.Control
-                                type="text"
-                                name="doctorName"
-                                value={formData.doctorName}
-                                onChange={handleChange}
-                                placeholder="Enter doctor name"
-                                disabled={isRecording}
-                                className="border-start-0"
-                                style={{ height: "45px" }}
-                              />
-                            </div>
+                            <MultiSelect
+                              options={doctors.map(doctor => ({
+                                value: doctor._id,
+                                label: doctor.name
+                              }))}
+                              value={formData.doctorName}
+                              onChange={handleDoctorChange}
+                              placeholder="Select doctors..."
+                              disabled={isRecording}
+                              loading={doctorsLoading}
+                              icon={FaUserMd}
+                              onFirstClick={fetchDoctors}
+                            />
                           </Form.Group>
                         </motion.div>
 
@@ -794,21 +964,19 @@ const Home = () => {
                             <Form.Label className="fw-bold">
                               ICU Consultant
                             </Form.Label>
-                            <div className="input-group">
-                              <span className="input-group-text bg-white border-end-0">
-                                <FaUserMd className="text-primary" />
-                              </span>
-                              <Form.Control
-                                type="text"
-                                name="icuConsultantName"
-                                value={formData.icuConsultantName}
-                                onChange={handleChange}
-                                placeholder="Enter ICU consultant name"
-                                disabled={isRecording}
-                                className="border-start-0"
-                                style={{ height: "45px" }}
-                              />
-                            </div>
+                            <MultiSelect
+                              options={icuConsultants.map(consultant => ({
+                                value: consultant._id,
+                                label: consultant.name
+                              }))}
+                              value={formData.icuConsultantName}
+                              onChange={handleIcuConsultantChange}
+                              placeholder="Select ICU consultants..."
+                              disabled={isRecording}
+                              loading={icuConsultantsLoading}
+                              icon={FaUserMd}
+                              onFirstClick={fetchIcuConsultants}
+                            />
                           </Form.Group>
                         </motion.div>
 
@@ -823,41 +991,41 @@ const Home = () => {
                               Condition Type
                             </Form.Label>
                             <div className="row g-2">
-                              {[
-                                { 
-                                  value: "normal", 
-                                  label: "Normal", 
-                                  color: "success", 
-                                  icon: FaCheckCircle,
-                                  gradient: "from-green-50 to-green-100",
-                                  borderColor: "border-success",
-                                  textColor: "text-success",
-                                  selectedBg: "bg-success",
-                                  selectedText: "text-white"
-                                },
-                                { 
-                                  value: "icu", 
-                                  label: "ICU", 
-                                  color: "warning", 
-                                  icon: FaExclamationTriangle,
-                                  gradient: "from-yellow-50 to-yellow-100",
-                                  borderColor: "border-warning",
-                                  textColor: "text-warning",
-                                  selectedBg: "bg-warning",
-                                  selectedText: "text-white"
-                                },
-                                { 
-                                  value: "critical", 
-                                  label: "Critical", 
-                                  color: "danger", 
-                                  icon: FaExclamationCircle,
-                                  gradient: "from-red-50 to-red-100",
-                                  borderColor: "border-danger",
-                                  textColor: "text-danger",
-                                  selectedBg: "bg-danger",
-                                  selectedText: "text-white"
-                                },
-                              ].map((option) => {
+                                                              {[
+                                  { 
+                                    value: "normal", 
+                                    label: "Normal", 
+                                    color: "success", 
+                                    icon: FaCheckCircle,
+                                    gradient: "from-green-50 to-green-100",
+                                    borderColor: "border-success",
+                                    textColor: "text-success",
+                                    selectedBg: "bg-success",
+                                    selectedText: "text-white"
+                                  },
+                                  { 
+                                    value: "CriticalCare", 
+                                    label: "CriticalCare", 
+                                    color: "warning", 
+                                    icon: FaExclamationTriangle,
+                                    gradient: "from-yellow-50 to-yellow-100",
+                                    borderColor: "border-warning",
+                                    textColor: "text-warning",
+                                    selectedBg: "bg-warning",
+                                    selectedText: "text-white"
+                                  },
+                                  { 
+                                    value: "MLC", 
+                                    label: "MLC", 
+                                    color: "danger", 
+                                    icon: FaExclamationCircle,
+                                    gradient: "from-red-50 to-red-100",
+                                    borderColor: "border-danger",
+                                    textColor: "text-danger",
+                                    selectedBg: "bg-danger",
+                                    selectedText: "text-white"
+                                  },
+                                ].map((option) => {
                                 const IconComponent = option.icon;
                                 const isSelected = formData.conditionType === option.value;
                                 return (
@@ -1136,6 +1304,62 @@ const Home = () => {
         onEditProfile={handleEditProfile}
         user={user}
       />
+
+      {/* Masters Button - Admin Only */}
+      {user?.role === 'admin' && (
+        <motion.div
+          className="position-fixed"
+          style={{
+            top: showUserProfile ? "280px" : "80px",
+            right: "20px",
+            zIndex: 1050,
+            minWidth: "320px",
+            transition: "top 0.3s ease",
+          }}
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Card
+            className="shadow-lg border-0"
+            style={{
+              borderRadius: "16px",
+              background: "rgba(255, 255, 255, 0.98)",
+              backdropFilter: "blur(15px)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+            }}
+            onClick={() => navigate('/masters')}
+          >
+            <Card.Body className="p-4">
+              <div className="d-flex align-items-center">
+                <div
+                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                  style={{
+                    width: "60px",
+                    height: "60px",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    fontSize: "1.2rem",
+                    fontWeight: "bold",
+                  }}
+                >
+                  <FaCog />
+                </div>
+                <div className="flex-grow-1">
+                  <h6 className="mb-0 fw-bold text-dark">
+                    Masters
+                  </h6>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Edit Profile Modal */}
       <EditProfileModal

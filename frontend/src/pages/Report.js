@@ -21,6 +21,8 @@ import {
   FaArrowLeft,
   FaPlay,
   FaEdit,
+  FaCog,
+  FaUserMd,
 } from "react-icons/fa";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -29,6 +31,7 @@ import { saveAs } from "file-saver";
 import { consultationAPI, API_URL } from "../services/api";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import MultiSelect from "../components/MultiSelect";
 
 const Report = () => {
   const navigate = useNavigate();
@@ -71,6 +74,14 @@ const Report = () => {
     department: "",
     conditionType: "",
   });
+
+  // Master data states for edit modal
+  const [editDoctors, setEditDoctors] = useState([]);
+  const [editIcuConsultants, setEditIcuConsultants] = useState([]);
+  const [editMastersLoading, setEditMastersLoading] = useState(false);
+  const [editMastersError, setEditMastersError] = useState("");
+  const [editDoctorsLoaded, setEditDoctorsLoaded] = useState(false);
+  const [editIcuConsultantsLoaded, setEditIcuConsultantsLoaded] = useState(false);
 
   // ✅ Helper function to validate and extract consultation data
   const extractConsultationData = (responseData) => {
@@ -329,7 +340,7 @@ const Report = () => {
           item.attenderName || "-",
           item.icuConsultantName || "-",
           `${item.recordingDuration || 0} seconds`,
-          item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
+          item.conditionType ? item.conditionType : "N/A",
         ]),
         theme: "grid",
         headStyles: {
@@ -410,7 +421,7 @@ const Report = () => {
         "Attender": item.attenderName || "-",
         "ICU Consultant": item.icuConsultantName || "-",
         "Duration": `${item.recordingDuration || 0} seconds`,
-        "Condition": item.conditionType ? item.conditionType.charAt(0).toUpperCase() + item.conditionType.slice(1) : "N/A",
+        "Condition": item.conditionType ? item.conditionType : "N/A",
       }))
     );
 
@@ -643,6 +654,46 @@ const Report = () => {
     });
   };
 
+  // Fetch doctors for edit modal
+  const fetchEditDoctors = async () => {
+    if (!editDoctorsLoaded && !editMastersLoading) {
+      setEditMastersLoading(true);
+      setEditMastersError("");
+      
+      try {
+        const doctorsResponse = await api.get('/masters/doctors');
+        setEditDoctors(doctorsResponse.data);
+        setEditDoctorsLoaded(true);
+      } catch (error) {
+        console.error('Error fetching doctors for edit:', error);
+        setEditMastersError('Failed to load doctors');
+      } finally {
+        setEditMastersLoading(false);
+      }
+    }
+  };
+
+  // Fetch ICU consultants for edit modal
+  const fetchEditIcuConsultants = async () => {
+    if (!editIcuConsultantsLoaded && !editMastersLoading) {
+      setEditMastersLoading(true);
+      setEditMastersError("");
+      
+      try {
+        const icuResponse = await api.get('/masters/icu-consultants');
+        setEditIcuConsultants(icuResponse.data);
+        setEditIcuConsultantsLoaded(true);
+      } catch (error) {
+        console.error('Error fetching ICU consultants for edit:', error);
+        setEditMastersError('Failed to load ICU consultants');
+      } finally {
+        setEditMastersLoading(false);
+      }
+    }
+  };
+
+
+
   const handleEditSave = async () => {
     try {
       setLoading(true);
@@ -774,12 +825,18 @@ const Report = () => {
                     disabled={loading || consultations.length === 0}
                     style={{
                       borderWidth: "2px",
-                      borderRadius: "10px",
-                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      padding: "8px 16px",
                       fontWeight: "500",
+                      fontSize: "0.9rem",
+                      height: "40px",
+                      minWidth: "110px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <FaFilePdf className="me-2" />
+                    <FaFilePdf className="me-2" style={{ fontSize: "0.8rem" }} />
                     Export PDF
                   </Button>
                   <Button
@@ -789,12 +846,18 @@ const Report = () => {
                     disabled={loading || consultations.length === 0}
                     style={{
                       borderWidth: "2px",
-                      borderRadius: "10px",
-                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      padding: "8px 16px",
                       fontWeight: "500",
+                      fontSize: "0.9rem",
+                      height: "40px",
+                      minWidth: "110px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
-                    <FaFileExcel className="me-2" />
+                    <FaFileExcel className="me-2" style={{ fontSize: "0.8rem" }} />
                     Export Excel
                   </Button>
                 </div>
@@ -990,8 +1053,8 @@ const Report = () => {
                         >
                           <option value="">All Conditions</option>
                           <option value="normal">🟢 Normal</option>
-                          <option value="icu">⚠️ ICU</option>
-                          <option value="critical">🚨 Critical</option>
+                          <option value="CriticalCare">⚠️ CriticalCare</option>
+                          <option value="MLC">🚨 MLC</option>
                         </Form.Select>
                       </Form.Group>
                     </div>
@@ -1544,9 +1607,9 @@ const Report = () => {
                               className={`badge ${
                                 consultation.conditionType === "normal"
                                   ? "bg-success"
-                                  : consultation.conditionType === "icu"
+                                  : consultation.conditionType === "CriticalCare"
                                   ? "bg-warning"
-                                  : consultation.conditionType === "critical"
+                                  : consultation.conditionType === "MLC"
                                   ? "bg-danger"
                                   : "bg-secondary"
                               }`}
@@ -1558,9 +1621,9 @@ const Report = () => {
                                 background:
                                   consultation.conditionType === "normal"
                                     ? "linear-gradient(135deg, #10b981 0%, #059669 100%)"
-                                    : consultation.conditionType === "icu"
+                                    : consultation.conditionType === "CriticalCare"
                                     ? "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)"
-                                    : consultation.conditionType === "critical"
+                                    : consultation.conditionType === "MLC"
                                     ? "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)"
                                     : "linear-gradient(135deg, #6b7280 0%, #4b5563 100%)",
                                 color: "white",
@@ -1861,6 +1924,12 @@ const Report = () => {
             <Modal.Title>Edit Patient Details</Modal.Title>
           </Modal.Header>
           <Modal.Body>
+            {editMastersError && (
+              <Alert variant="warning" className="mb-3">
+                <FaCog className="me-2" />
+                {editMastersError}
+              </Alert>
+            )}
             <Form>
               {/* 1. UHID - Read Only */}
               <Form.Group className="mb-3">
@@ -1941,42 +2010,58 @@ const Report = () => {
               {/* 5. Doctor Name */}
               <Form.Group className="mb-3">
                 <Form.Label>Doctor Name</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="doctorName"
-                  value={editForm.doctorName}
-                  onChange={handleEditFormChange}
-                  placeholder="Enter doctor name"
-                  style={{
-                    borderRadius: "8px",
-                    border: "2px solid #e2e8f0",
-                    fontSize: "0.9rem",
-                    padding: "8px 12px",
+                <MultiSelect
+                  options={editDoctors.map(doctor => ({
+                    value: doctor._id,
+                    label: doctor.name
+                  }))}
+                  value={editForm.doctorName ? [{
+                    value: editForm.doctorName,
+                    label: editForm.doctorName
+                  }] : []}
+                  onChange={(selected) => {
+                    setEditForm({
+                      ...editForm,
+                      doctorName: selected.length > 0 ? selected[0].label : ""
+                    });
                   }}
+                  placeholder="Select doctor..."
+                  disabled={editMastersLoading}
+                  loading={editMastersLoading}
+                  icon={FaUserMd}
+                  onFirstClick={fetchEditDoctors}
                 />
               </Form.Group>
 
               {/* 6. ICU Consultant */}
               <Form.Group className="mb-3">
                 <Form.Label>ICU Consultant</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="icuConsultantName"
-                  value={editForm.icuConsultantName}
-                  onChange={handleEditFormChange}
-                  placeholder="Enter ICU consultant name"
-                  style={{
-                    borderRadius: "8px",
-                    border: "2px solid #e2e8f0",
-                    fontSize: "0.9rem",
-                    padding: "8px 12px",
+                <MultiSelect
+                  options={editIcuConsultants.map(consultant => ({
+                    value: consultant._id,
+                    label: consultant.name
+                  }))}
+                  value={editForm.icuConsultantName ? [{
+                    value: editForm.icuConsultantName,
+                    label: editForm.icuConsultantName
+                  }] : []}
+                  onChange={(selected) => {
+                    setEditForm({
+                      ...editForm,
+                      icuConsultantName: selected.length > 0 ? selected[0].label : ""
+                    });
                   }}
+                  placeholder="Select ICU consultant..."
+                  disabled={editMastersLoading}
+                  loading={editMastersLoading}
+                  icon={FaUserMd}
+                  onFirstClick={fetchEditIcuConsultants}
                 />
               </Form.Group>
 
               {/* 7. Condition Type */}
               <Form.Group className="mb-3">
-                <Form.Label>🛏️ Condition Type</Form.Label>
+                <Form.Label> Condition Type</Form.Label>
                 <Form.Select
                   name="conditionType"
                   value={editForm.conditionType}
@@ -1990,8 +2075,8 @@ const Report = () => {
                 >
                   <option value="">Select Condition Type</option>
                   <option value="normal">🟢 Normal</option>
-                  <option value="icu">⚠️ ICU</option>
-                  <option value="critical">🚨 Critical</option>
+                  <option value="CriticalCare">⚠️ CriticalCare</option>
+                  <option value="MLC">🚨 MLC</option>
                 </Form.Select>
               </Form.Group>
             </Form>

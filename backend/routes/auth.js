@@ -17,6 +17,7 @@ router.post(
     body('doctorId').notEmpty().withMessage('Doctor ID is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
     body('role').optional().isIn(['doctor', 'admin']).withMessage('Role must be either doctor or admin'),
+    body('location').optional().isString().withMessage('Location must be a string'),
   ],
   async (req, res) => {
     // Validate input data
@@ -30,7 +31,7 @@ router.post(
     }
 
     try {
-      const { name, doctorId, password, role } = req.body;
+      const { name, doctorId, password, role, location  } = req.body;
       console.log('Registration attempt for:', { name, doctorId, role });
 
       // Check if user already exists
@@ -46,7 +47,8 @@ router.post(
         name,
         doctorId,
         password, // The password will be hashed by the pre-save middleware
-        role: role || 'doctor'
+        role: role || 'doctor',
+        location
       });
 
       // Save user (this will trigger the pre-save middleware to hash the password)
@@ -71,6 +73,7 @@ router.post(
           name: user.name,
           doctorId: user.doctorId,
           role: user.role,
+          location: user.location
         },
       });
     } catch (err) {
@@ -116,7 +119,8 @@ router.post(
           id: 'admin',
           name: 'Admin',
           doctorId: 'admin',
-          role: 'admin'
+          role: 'admin',
+          location: 'APH'
         };
 
         // Create token
@@ -180,6 +184,7 @@ router.post(
           name: user.name,
           doctorId: user.doctorId,
           role: user.role,
+          location: user.location,
         },
       });
     } catch (err) {
