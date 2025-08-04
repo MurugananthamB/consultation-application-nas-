@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Container, Form, Button, Card, Row, Col, Alert, InputGroup } from 'react-bootstrap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaIdCard, FaLock, FaEye, FaEyeSlash, FaUserMd } from 'react-icons/fa';
+import { FaUser, FaIdCard, FaLock, FaEye, FaEyeSlash, FaUserMd, FaMapMarkerAlt } from 'react-icons/fa';
 import { authAPI } from '../services/api';
 
 const DoctorRegister = () => {
@@ -10,6 +10,7 @@ const DoctorRegister = () => {
   const [formData, setFormData] = useState({
     name: '',
     doctorId: '',
+    location: '',
     password: '',
     confirmPassword: ''
   });
@@ -38,6 +39,7 @@ const DoctorRegister = () => {
       const response = await authAPI.register({
         name: formData.name,
         doctorId: formData.doctorId,
+        location: formData.location,
         password: formData.password,
         role: 'doctor'
       });
@@ -166,7 +168,32 @@ const DoctorRegister = () => {
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.8, duration: 0.5 }}
+                        transition={{ delay: 0.75, duration: 0.5 }}
+                      >
+                        <Form.Group className="mb-3">
+                          <Form.Label className="fw-bold">Location</Form.Label>
+                          <div className="input-group">
+                            <span className="input-group-text bg-white border-end-0">
+                              <FaMapMarkerAlt className="text-primary" />
+                            </span>
+                            <Form.Control
+                              type="text"
+                              name="location"
+                              value={formData.location}
+                              onChange={handleChange}
+                              placeholder="Enter your location"
+                              required
+                              className="border-start-0"
+                              style={{ height: '50px' }}
+                            />
+                          </div>
+                        </Form.Group>
+                      </motion.div>
+
+                      <motion.div
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.85, duration: 0.5 }}
                       >
                         <Form.Group className="mb-3">
                           <Form.Label className="fw-bold">Password</Form.Label>
@@ -199,7 +226,7 @@ const DoctorRegister = () => {
                       <motion.div
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.9, duration: 0.5 }}
+                        transition={{ delay: 0.95, duration: 0.5 }}
                       >
                         <Form.Group className="mb-4">
                           <Form.Label className="fw-bold">Confirm Password</Form.Label>
@@ -232,7 +259,7 @@ const DoctorRegister = () => {
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1, duration: 0.5 }}
+                        transition={{ delay: 1.05, duration: 0.5 }}
                       >
                         <div className="d-grid gap-2">
                           <Button
@@ -261,7 +288,7 @@ const DoctorRegister = () => {
                       <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 1.1, duration: 0.5 }}
+                        transition={{ delay: 1.15, duration: 0.5 }}
                         className="text-center mt-4"
                       >
                         <p className="mb-0 text-muted">

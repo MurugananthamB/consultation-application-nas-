@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Table, Modal, Alert, Spinner, Pagination } from 'react-bootstrap';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FaFilePdf, FaFileExcel, FaFilter, FaArrowLeft, FaPlay, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaFilePdf, FaFileExcel, FaFilter, FaArrowLeft, FaPlay, FaEdit, FaTrash, FaCog } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -174,7 +174,23 @@ const AdminDashboard = () => {
                 <FaArrowLeft className="me-2" />
                 Back to Home
               </Button>
-              <div>
+              <div className="d-flex gap-3">
+                <Button 
+                  variant="outline-primary" 
+                  onClick={() => navigate('/masters')}
+                  style={{
+                    borderRadius: "10px",
+                    padding: "8px 16px",
+                    fontWeight: "500",
+                    border: "2px solid #667eea",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    boxShadow: "0 4px 15px rgba(102, 126, 234, 0.3)"
+                  }}
+                >
+                  <FaCog className="me-2" />
+                  Masters
+                </Button>
                 <Button variant="outline-primary" className="me-2" onClick={exportToPDF} disabled={loading || consultations.length === 0}>
                   <FaFilePdf className="me-2" />
                   Export PDF

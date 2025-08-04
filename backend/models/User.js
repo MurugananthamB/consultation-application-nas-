@@ -24,6 +24,10 @@ const userSchema = new mongoose.Schema({
     enum: ['doctor', 'admin'],
     default: 'doctor'
   },
+  location: {
+    type: String,
+    required: [true, 'Please provide your location']
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -93,7 +97,8 @@ userSchema.statics.createDefaultAdmin = async function() {
         name: 'Admin',
         doctorId: 'admin',
         password: hashedPassword,
-        role: 'admin'
+        role: 'admin',
+        location: 'APH'
       });
       
       await admin.save();
