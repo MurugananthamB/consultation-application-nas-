@@ -136,7 +136,7 @@ exports.streamVideo = (req, res) => {
  */
 exports.getFilteredVideos = async (req, res) => {
   try {
-    const { dateFrom, dateTo, uhid, patientName, department, doctorName } =
+    const { dateFrom, dateTo, uhid, patientName, department, doctorName, conditionType } =
       req.query;
     const query = {};
 
@@ -160,6 +160,8 @@ exports.getFilteredVideos = async (req, res) => {
       query.department = { $regex: escapeRegex(department), $options: "i" };
     if (doctorName)
       query.doctorName = { $regex: escapeRegex(doctorName), $options: "i" };
+    if (conditionType)
+      query.conditionType = { $regex: escapeRegex(conditionType), $options: "i" };
 
     const results = await Consultation.find(query).sort({ createdAt: -1 });
     res.json(results);

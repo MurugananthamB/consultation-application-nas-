@@ -128,6 +128,7 @@ router.post(
     body("patientName").notEmpty().withMessage("Patient name is required"),
     body("uhidId").notEmpty().withMessage("UHID is required"),
     body("department").notEmpty().withMessage("Department is required"),
+    body("conditionType").isIn(["normal", "CriticalCare", "MLC"]).withMessage("Condition Type must be normal, CriticalCare, or MLC"),
   ],
   async (req, res) => {
     const errors = validationResult(req);
