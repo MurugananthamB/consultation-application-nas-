@@ -8,7 +8,7 @@ import DoctorRegister from './pages/DoctorRegister';
 import Home from './pages/Home';
 import Report from './pages/Report';
 import AdminDashboard from './pages/AdminDashboard';
-import Masters from './pages/Masters';
+import Masters from './pages/Masters.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './App.css';
 import StorageSettings from './pages/StorageSettings';

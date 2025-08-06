@@ -8,8 +8,8 @@ const Location = require('../models/Location');
 const getAllDoctors = async (req, res) => {
   try {
     // Return only essential public fields for dropdown usage
-    const doctors = await Doctor.find()
-      .select('name _id') // Only return name and _id
+    const doctors = await Doctor.find({ status: 'active' })
+      .select('name _id status') // Include status field
       .sort({ name: 1 }); // Sort alphabetically by name for better UX
     
     res.status(200).json(doctors);
@@ -23,10 +23,29 @@ const getAllDoctors = async (req, res) => {
   }
 };
 
+// Get all doctors for admin (including inactive ones)
+const getAllDoctorsAdmin = async (req, res) => {
+  try {
+    // Return all doctors including inactive ones for admin management
+    const doctors = await Doctor.find()
+      .select('name _id status createdAt updatedAt')
+      .sort({ name: 1 });
+    
+    res.status(200).json(doctors);
+  } catch (error) {
+    console.error('Error fetching all doctors:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch all doctors',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
 // Create new doctor
 const createDoctor = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, status = 'active' } = req.body;
     
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -45,7 +64,8 @@ const createDoctor = async (req, res) => {
     }
 
     const doctor = new Doctor({
-      name: name.trim()
+      name: name.trim(),
+      status
     });
 
     const savedDoctor = await doctor.save();
@@ -64,7 +84,7 @@ const createDoctor = async (req, res) => {
 const updateDoctor = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, status } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -96,7 +116,7 @@ const updateDoctor = async (req, res) => {
 
     const updatedDoctor = await Doctor.findByIdAndUpdate(
       id,
-      { name: name.trim() },
+      { name: name.trim(), status },
       { new: true, runValidators: true }
     );
 
@@ -138,14 +158,47 @@ const deleteDoctor = async (req, res) => {
   }
 };
 
+// Toggle doctor status (activate/deactivate)
+const toggleDoctorStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const doctor = await Doctor.findById(id);
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: 'Doctor not found'
+      });
+    }
+
+    // Toggle status
+    const newStatus = doctor.status === 'active' ? 'inactive' : 'active';
+    
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedDoctor);
+  } catch (error) {
+    console.error('Error toggling doctor status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle doctor status',
+      error: error.message
+    });
+  }
+};
+
 // ===== ICU CONSULTANT CONTROLLERS =====
 
 // Get all ICU consultants (accessible to all authenticated users)
 const getAllIcuConsultants = async (req, res) => {
   try {
     // Return only essential public fields for dropdown usage
-    const icuConsultants = await IcuConsultant.find()
-      .select('name _id') // Only return name and _id
+    const icuConsultants = await IcuConsultant.find({ status: 'active' })
+      .select('name _id status') // Include status field
       .sort({ name: 1 }); // Sort alphabetically by name for better UX
     
     res.status(200).json(icuConsultants);
@@ -159,10 +212,29 @@ const getAllIcuConsultants = async (req, res) => {
   }
 };
 
+// Get all ICU consultants for admin (including inactive ones)
+const getAllIcuConsultantsAdmin = async (req, res) => {
+  try {
+    // Return all ICU consultants including inactive ones for admin management
+    const icuConsultants = await IcuConsultant.find()
+      .select('name _id status createdAt updatedAt')
+      .sort({ name: 1 });
+    
+    res.status(200).json(icuConsultants);
+  } catch (error) {
+    console.error('Error fetching all ICU consultants:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch all ICU consultants',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
 // Create new ICU consultant
 const createIcuConsultant = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, status = 'active' } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -181,7 +253,8 @@ const createIcuConsultant = async (req, res) => {
     }
 
     const icuConsultant = new IcuConsultant({
-      name: name.trim()
+      name: name.trim(),
+      status
     });
 
     const savedConsultant = await icuConsultant.save();
@@ -200,7 +273,7 @@ const createIcuConsultant = async (req, res) => {
 const updateIcuConsultant = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, status } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({
@@ -232,7 +305,7 @@ const updateIcuConsultant = async (req, res) => {
 
     const updatedConsultant = await IcuConsultant.findByIdAndUpdate(
       id,
-      { name: name.trim() },
+      { name: name.trim(), status },
       { new: true, runValidators: true }
     );
 
@@ -269,6 +342,39 @@ const deleteIcuConsultant = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to delete ICU consultant',
+      error: error.message
+    });
+  }
+};
+
+// Toggle ICU consultant status (activate/deactivate)
+const toggleIcuConsultantStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const consultant = await IcuConsultant.findById(id);
+    if (!consultant) {
+      return res.status(404).json({
+        success: false,
+        message: 'Consultant not found'
+      });
+    }
+
+    // Toggle status
+    const newStatus = consultant.status === 'active' ? 'inactive' : 'active';
+    
+    const updatedConsultant = await IcuConsultant.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedConsultant);
+  } catch (error) {
+    console.error('Error toggling ICU consultant status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle ICU consultant status',
       error: error.message
     });
   }
@@ -444,23 +550,263 @@ const toggleLocationStatus = async (req, res) => {
   }
 };
 
+// ===== USER MANAGEMENT CONTROLLERS =====
+
+const User = require('../models/User');
+
+// Get all users for admin
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find()
+      .select('name doctorId role location status createdAt updatedAt')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch users',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
+// Create new user
+const createUser = async (req, res) => {
+  try {
+    const { name, doctorId, password, role = 'user', location, status = 'active' } = req.body;
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'User name is required'
+      });
+    }
+
+    if (!doctorId || !doctorId.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Employee ID is required'
+      });
+    }
+
+    if (!password || !password.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password is required'
+      });
+    }
+
+    if (!location || !location.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location is required'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ doctorId: doctorId.trim() });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this Employee ID already exists'
+      });
+    }
+
+    const user = new User({
+      name: name.trim(),
+      doctorId: doctorId.trim(),
+      password: password.trim(),
+      role,
+      location: location.trim(),
+      status
+    });
+
+    const savedUser = await user.save();
+    
+    // Return user without password
+    const userResponse = {
+      _id: savedUser._id,
+      name: savedUser.name,
+      doctorId: savedUser.doctorId,
+      role: savedUser.role,
+      location: savedUser.location,
+      status: savedUser.status,
+      createdAt: savedUser.createdAt,
+      updatedAt: savedUser.updatedAt
+    };
+
+    res.status(201).json(userResponse);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create user',
+      error: error.message
+    });
+  }
+};
+
+// Update user
+const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, doctorId, role, location, status } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'User name is required'
+      });
+    }
+
+    if (!doctorId || !doctorId.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Employee ID is required'
+      });
+    }
+
+    if (!location || !location.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location is required'
+      });
+    }
+
+    // Check if user exists
+    const existingUser = await User.findById(id);
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Check if doctorId already exists for another user
+    const duplicateUser = await User.findOne({ 
+      doctorId: doctorId.trim(), 
+      _id: { $ne: id } 
+    });
+    if (duplicateUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'User with this Employee ID already exists'
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { 
+        name: name.trim(), 
+        doctorId: doctorId.trim(), 
+        role, 
+        location: location.trim(), 
+        status 
+      },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update user',
+      error: error.message
+    });
+  }
+};
+
+// Delete user
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user',
+      error: error.message
+    });
+  }
+};
+
+// Toggle user status (activate/deactivate)
+const toggleUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Toggle status
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Error toggling user status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle user status',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   // Doctor controllers
   getAllDoctors,
+  getAllDoctorsAdmin,
   createDoctor,
   updateDoctor,
   deleteDoctor,
+  toggleDoctorStatus,
   
   // ICU Consultant controllers
   getAllIcuConsultants,
+  getAllIcuConsultantsAdmin,
   createIcuConsultant,
   updateIcuConsultant,
   deleteIcuConsultant,
+  toggleIcuConsultantStatus,
   
   // Location controllers
   getAllLocations,
   createLocation,
   updateLocation,
   deleteLocation,
-  toggleLocationStatus
+  toggleLocationStatus,
+
+  // User management controllers
+  getAllUsers,
+  createUser,
+  updateUser,
+  deleteUser,
+  toggleUserStatus
 }; 

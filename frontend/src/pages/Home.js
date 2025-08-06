@@ -3,10 +3,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios"; // ✅ FIXED
 import { useAuth } from "../context/AuthContext";
 import fixWebmDuration from "webm-duration-fix";
-import UserProfileCard from "../components/UserProfileCard";
-import UserMenuButton from "../components/UserMenuButton";
-import EditProfileModal from "../components/EditProfileModal";
-import MultiSelect from "../components/MultiSelect";
+import UserProfileCard from "../components/UserProfileCard.js";
+import UserMenuButton from "../components/UserMenuButton.js";
+import EditProfileModal from "../components/EditProfileModal.js";
+import MultiSelect from "../components/MultiSelect.js";
 
 import {
   Container,

@@ -1,18 +1,32 @@
 STANDARD OPERATING PROCEDURE (SOP) - CONSULTATION APP
 ================================================================
 
+DOCUMENT VERSION: 2.0
+LAST UPDATED: January 2025
+MAINTAINED BY: APH Development Team
+REVIEW CYCLE: Quarterly
+
+================================================================
+
 1. PROJECT OVERVIEW
 ===================
 
-The Consultation App is a comprehensive healthcare video consultation platform designed for medical professionals to conduct and record patient consultations. The application provides secure video recording, storage, and management capabilities with role-based access control for doctors and administrators.
+The Consultation App is a comprehensive healthcare video consultation platform designed for medical professionals to conduct, record, and manage patient consultations. The application provides secure video recording, NAS storage integration, master data management, role-based access control, and advanced reporting capabilities.
 
-Key Features:
-- Video Recording: Real-time video capture during consultations
-- NAS Storage Integration: Secure video storage on Network Attached Storage
-- Patient Management: Complete patient information tracking with UHID
-- Report Generation: PDF and Excel export capabilities
-- Role-based Access: Doctor and Admin user roles
-- Docker Deployment: Containerized application with NGINX reverse proxy
+MISSION STATEMENT:
+To provide healthcare professionals with a secure, efficient, and user-friendly platform for conducting and managing video consultations while maintaining the highest standards of data privacy and security.
+
+KEY FEATURES:
+✅ Video Recording: Real-time video capture during consultations
+✅ NAS Storage Integration: Secure video storage on Network Attached Storage
+✅ Patient Management: Complete patient information tracking with UHID
+✅ Report Generation: PDF and Excel export capabilities with advanced filtering
+✅ Role-based Access: Doctor and Admin user roles with location-based restrictions
+✅ Master Data Management: Doctors, ICU Consultants, and Locations CRUD operations
+✅ Location-based Security: Users restricted to their assigned location data
+✅ Docker Deployment: Containerized application with NGINX reverse proxy
+✅ Enhanced Authentication: JWT-based secure authentication with bcrypt encryption
+✅ Advanced UI: Modern React interface with animations and responsive design
 
 2. TECHNOLOGIES USED
 ====================
@@ -46,7 +60,7 @@ Infrastructure & DevOps:
 
 3. FOLDER STRUCTURE
 ===================
-
+```
 consultation-app/
 ├── backend/                    # Backend Node.js application
 │   ├── auth/                   # Authentication utilities
@@ -90,71 +104,188 @@ consultation-app/
 │   └── package.json         # Frontend dependencies
 ├── Dockerfile               # Multi-stage Docker build
 └── consultation-app.tar     # Application archive
+```
 
-4. APPLICATION FEATURES
-=======================
+4. APPLICATION FEATURES & CAPABILITIES
+=====================================
 
-Core Functionality:
-1. User Authentication: JWT-based login with role-based access
-2. Video Recording: Real-time consultation recording with WebM format
-3. Patient Management: UHID-based patient tracking
-4. Consultation Tracking: Complete consultation lifecycle management
-5. Video Storage: NAS-based secure video storage with date-based organization
-6. Report Generation: PDF and Excel export with filtering capabilities
-7. Video Playback: Secure video streaming with range request support
-8. Admin Dashboard: Administrative interface for user management
+4.1 CORE FUNCTIONALITIES
+------------------------
+✅ Video Consultation Recording
+  - Real-time video capture using WebM format
+  - Automatic duration tracking
+  - High-quality video compression
+  - Browser-based recording (no plugins required)
 
-User Roles:
-- Doctor: Can create consultations, record videos, view reports
-- Admin: Full access including user management and system settings
+✅ Secure Video Storage
+  - NAS (Network Attached Storage) integration
+  - Date-based folder organization (DD-MM-YYYY)
+  - Unique filename generation using MongoDB ObjectId
+  - Secure file access with JWT authentication
 
-5. STEP-BY-STEP SETUP GUIDE
-============================
+✅ Patient Management System
+  - UHID (Unique Health Identifier) based tracking
+  - Complete patient demographic information
+  - Consultation history maintenance
+  - Department-wise patient categorization
 
-Development Environment Setup:
+✅ User Authentication & Authorization
+  - JWT-based secure authentication
+  - Role-based access control (Doctor/Admin)
+  - Password encryption using bcrypt
+  - Session management and token expiration
 
-Prerequisites:
-- Node.js 18+ installed
-- MongoDB instance running
-- NAS storage mounted and accessible
-- Git installed
+✅ Master Data Management
+  - Doctor Master: CRUD operations for doctor information
+  - ICU Consultant Master: Specialized consultant data
+  - Location Master: Hospital location/branch management
+  - Active/Inactive status control for all masters
 
-Backend Setup:
-```bash
-# 1. Navigate to backend directory
+✅ Advanced Reporting System
+  - Multi-format export (PDF and Excel)
+  - Advanced filtering capabilities
+  - Location-based data access control
+  - Real-time consultation statistics
+
+✅ Role-based Data Security
+  - Admin: Full access to all locations and features
+  - Doctor: Restricted to assigned location data
+  - Database-level security filtering
+
+4.2 RECENT ENHANCEMENTS (Version 2.0)
+-------------------------------------
+🆕 Location Management System
+  - Complete CRUD operations for hospital locations
+  - Dynamic location dropdown population
+  - Location-based report filtering
+  - Admin-only location modification rights
+
+🆕 Enhanced Master Data Features
+  - Centralized master data management interface
+  - Real-time dropdown updates across application
+  - Alphabetical sorting for better UX
+  - Bulk operations support
+
+🆕 Improved Authentication Flow
+  - Dynamic location field in registration
+  - Enhanced password validation
+  - Graceful error handling for duplicate users
+  - Automatic admin user creation
+
+🆕 Advanced Report Features
+  - Location column in report tables
+  - Proper text wrapping for long location names
+  - Enhanced export functionality
+  - Role-based data filtering at query level
+
+🆕 Security Enhancements
+  - Location-based data isolation
+  - Enhanced API authorization
+  - Improved error handling
+  - Audit trail improvements
+
+User Roles & Permissions:
+- Doctor: Create consultations, record videos, view own location reports, access master dropdowns
+- Admin: Full system access, manage master data, view all location reports, user management
+
+5. INSTALLATION & SETUP PROCEDURES
+==================================
+
+5.1 DEVELOPMENT ENVIRONMENT SETUP
+---------------------------------
+Prerequisites Checklist:
+□ Node.js 18+ installed and verified
+□ MongoDB 7.0+ running and accessible
+□ Git version control system installed
+□ NAS storage mounted and configured
+□ SSL certificates available (for HTTPS)
+□ Required ports available (3000, 5000, 443)
+
+Step-by-Step Installation:
+
+STEP 1: Repository Setup
+------------------------
+1. Clone the repository:
+   git clone <repository-url>
+   cd consultation-app
+
+2. Verify directory structure:
+   ls -la
+   # Should show: backend/, frontend/, Dockerfile, README.md, SOP.txt
+
+STEP 2: Backend Configuration
+-----------------------------
+1. Navigate to backend directory:
 cd backend
 
-# 2. Install dependencies
+2. Install Node.js dependencies:
 npm install
+   # Verify installation: npm list --depth=0
 
-# 3. Create .env file
+3. Create environment configuration:
 cp .env.example .env
+   # Edit .env file with appropriate values
 
-# 4. Configure environment variables
+4. Configure environment variables:
 MONGODB_URI=mongodb://localhost:27017/consultation-app
-JWT_SECRET=your-secret-key-here
-NAS_MOUNT_PATH=Z:
+   JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+   PORT=5000
+   NODE_ENV=development
+   NAS_MOUNT_PATH=/mnt/nas-biometrics
 NAS_FOLDER=Video Record
-PORT=5000
+   BCRYPT_SALT_ROUNDS=12
 
-# 5. Start development server
+5. Verify MongoDB connection:
+   # Test connection before starting application
+   mongo mongodb://localhost:27017/consultation-app
+
+6. Start development server:
 npm run dev
-```
+   # Should see: "✅ Connected to MongoDB" and "🚀 Server running on port 5000"
 
-Frontend Setup:
-```bash
-# 1. Navigate to frontend directory
-cd frontend
+STEP 3: Frontend Configuration
+------------------------------
+1. Navigate to frontend directory:
+   cd ../frontend
 
-# 2. Install dependencies
+2. Install React dependencies:
 npm install
+   # Verify installation: npm list --depth=0
 
-# 3. Create .env file
-REACT_APP_API_URL=https://localhost:5000/api
+3. Create environment configuration:
+   echo "REACT_APP_API_URL=https://localhost:5000/api" > .env
 
-# 4. Start development server
+4. Start development server:
 npm start
-```
+   # Application should open at http://localhost:3000
+
+STEP 4: Initial System Verification
+-----------------------------------
+1. Access application at http://localhost:3000
+2. Login with default admin credentials:
+   - Username: admin
+   - Password: admin123
+   - Location: APH
+3. Verify all menu items are accessible
+4. Test video recording functionality
+5. Verify report generation works
+6. Check master data management features
+
+5.2 DEFAULT USER ACCOUNTS
+-------------------------
+Default Admin Account (Auto-created):
+- Username: admin
+- Password: admin123
+- Role: Admin
+- Location: APH
+- Access: Full system access
+
+First-time Setup Recommendations:
+1. Change default admin password immediately
+2. Create additional admin users if needed
+3. Set up doctor accounts for each location
+4. Configure master data (doctors, consultants, locations)
+5. Test video recording and playback functionality
 
 Production Environment Setup:
 
@@ -279,40 +410,110 @@ File Structure Example:
 │   └── 507f1f77bcf86cd799439015.webm
 ```
 
-8. HOW MONGODB MODELS ARE STRUCTURED
-=====================================
+8. DATABASE MODELS & STRUCTURE
+===============================
 
-User Model (User.js):
+8.1 USER MODEL (User.js)
+------------------------
+Enhanced user model with location support:
 ```javascript
 {
-  name: String,           // User's full name
-  doctorId: String,       // Unique doctor identifier
-  password: String,       // Hashed password (bcrypt)
-  role: String,           // 'doctor' or 'admin'
-  createdAt: Date,        // Account creation timestamp
-  updatedAt: Date         // Last update timestamp
+  name: String,              // User's full name
+  doctorId: String,          // Unique doctor identifier (unique index)
+  password: String,          // bcrypt hashed password
+  role: String,              // 'doctor' or 'admin' (enum)
+  location: String,          // Assigned hospital location (required)
+  createdAt: Date,           // Account creation timestamp
+  updatedAt: Date            // Last update timestamp
 }
 ```
 
-Consultation Model (Consultation.js):
+Security Features:
+- Password hashing with bcrypt (12 salt rounds)
+- Pre-save middleware for password encryption
+- comparePassword method for authentication
+- Automatic admin user creation on startup
+
+8.2 CONSULTATION MODEL (Consultation.js)
+----------------------------------------
+Complete consultation tracking with location support:
 ```javascript
 {
-  patientName: String,        // Patient's full name
-  uhidId: String,            // Unique Health Identifier
-  department: String,         // Medical department
+  patientName: String,        // Patient's full name (required)
+  uhidId: String,            // Unique Health Identifier (required)
+  department: String,         // Medical department (required)
   doctor: ObjectId,          // Reference to User model
-  doctorName: String,        // Doctor's name
+  doctorName: String,        // Doctor's name (denormalized)
   attenderName: String,      // Attending person's name
   icuConsultantName: String, // ICU consultant name
+  conditionType: String,     // 'normal', 'CriticalCare', 'MLC' (enum)
+  location: String,          // Consultation location (NEW)
   videoFileName: String,     // Associated video filename
-  date: Date,               // Consultation date
+  date: Date,               // Consultation date/time
   recordingDuration: Number, // Video duration in seconds
   status: String,           // 'completed', 'pending', 'cancelled'
-  notes: String,            // Additional notes
+  notes: String,            // Additional consultation notes
   createdAt: Date,          // Record creation timestamp
   updatedAt: Date           // Last update timestamp
 }
 ```
+
+8.3 MASTER DATA MODELS
+----------------------
+Doctor Model (Doctor.js):
+```javascript
+{
+  name: String,              // Doctor's name (unique)
+  createdAt: Date,           // Creation timestamp
+  updatedAt: Date            // Last update timestamp
+}
+```
+
+ICU Consultant Model (IcuConsultant.js):
+```javascript
+{
+  name: String,              // Consultant's name (unique)
+  createdAt: Date,           // Creation timestamp
+  updatedAt: Date            // Last update timestamp
+}
+```
+
+Location Model (Location.js) - NEW:
+```javascript
+{
+  name: String,              // Location name (unique)
+  status: String,            // 'active' or 'inactive' (enum)
+  createdAt: Date,           // Creation timestamp
+  updatedAt: Date            // Last update timestamp
+}
+```
+
+Storage Settings Model (StorageSettings.js):
+```javascript
+{
+  path: String,              // Storage path configuration
+  maxSize: Number,           // Maximum size in MB
+  allowedTypes: Array,       // Allowed file types
+  lastUpdated: Date          // Last configuration update
+}
+```
+
+8.4 DATABASE INDEXES & PERFORMANCE
+----------------------------------
+Critical Indexes:
+- users.doctorId: Unique index for login performance
+- consultations.uhidId: Index for patient lookup
+- consultations.doctor: Index for doctor-specific queries
+- consultations.date: Index for date-based filtering and sorting
+- consultations.location: Index for location-based filtering
+- doctors.name: Unique index for dropdown population
+- icuconsultants.name: Unique index for dropdown population
+- locations.name: Unique index for location management
+
+Query Optimization:
+- Location-based filtering at database level
+- Efficient pagination with sorted results
+- Compound indexes for complex filter combinations
 
 Indexes for Performance:
 - uhidId: For patient lookup
@@ -574,11 +775,43 @@ Infrastructure Improvements:
 5. Backup Strategy: Automated backup and recovery procedures
 6. Disaster Recovery: Multi-region deployment strategy
 7. CI/CD Pipeline: Automated testing and deployment
-8. Infrastructure as Code: Terraform or CloudFormation templates
+8. Infrastructure as Code: Terraform or CloudFormation templates.
 
-================================================================
-Document Version: 1.0
-Last Updated: December 2024
-Maintained By: Development Team
+
+===========================================
+
+RECENT UPDATES IN VERSION 2.0:
+✅ Added comprehensive Location Management System
+✅ Enhanced Master Data Management (Doctors, ICU Consultants, Locations)
+✅ Implemented location-based data security and filtering
+✅ Added dynamic location dropdown in registration
+✅ Enhanced report filtering with location column
+✅ Improved export functionality (PDF/Excel)
+✅ Fixed text wrapping in report tables
+✅ Enhanced authentication and error handling
+✅ Added role-based API access control
+✅ Updated database models with location support
+
+CURRENT SYSTEM STATUS:
+- Fully functional video consultation platform
+- Complete master data management
+- Role-based access control implemented
+- Location-based security active
+- NAS storage integration working
+- PDF/Excel export functionality
+- Responsive UI with modern animations
+- Comprehensive API documentation
+
+===========================================
+
+Document Version: 2.0
+
+Last Updated: January 2025
+
+Maintained By: APH Development Team
+
 Review Cycle: Quarterly
-================================================================ 
+
+Next Review Due: April 2025
+
+===========================================
