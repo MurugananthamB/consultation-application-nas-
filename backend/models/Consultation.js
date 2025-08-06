@@ -35,6 +35,13 @@ const consultationSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    conditionType: {
+      type: String,
+      required: [true, "Condition Type is required"],
+      enum: ["normal", "CriticalCare", "MLC"],
+      trim: true,
+      default: "normal"
+    },
     videoFileName: {
       type: String,
       trim: true,
