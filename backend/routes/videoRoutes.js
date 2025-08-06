@@ -4,11 +4,12 @@ const {
   streamVideo,
   getFilteredVideos,
 } = require("../controllers/videoController");
+const { protect } = require("../middleware/auth");
 
-// Updated route with date param
-router.get("/videos/:date/:filename", streamVideo);
+// Updated route with date param (requires authentication)
+router.get("/videos/:date/:filename", protect, streamVideo);
 
-// 🔍 New route for filtering video metadata
-router.get("/videos/filter", getFilteredVideos);
+// 🔍 New route for filtering video metadata (requires authentication)
+router.get("/videos/filter", protect, getFilteredVideos);
 
 module.exports = router;

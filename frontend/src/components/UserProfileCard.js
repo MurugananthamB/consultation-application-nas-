@@ -11,7 +11,7 @@ import {
 } from "react-icons/fa";
 import ChangePasswordModal from "./ChangePasswordModal";
 
-const UserProfileCard = ({ isOpen, onClose, onLogout, onEditProfile, user }) => {
+const UserProfileCard = ({ isOpen, onClose, onLogout, onEditProfile, onPasswordChange, user }) => {
   const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Generate user initials from name
@@ -54,9 +54,10 @@ const UserProfileCard = ({ isOpen, onClose, onLogout, onEditProfile, user }) => 
   };
 
   const handlePasswordChangeSuccess = (passwordData) => {
-    // TODO: Handle successful password change
     console.log("Password changed successfully:", passwordData);
-    // You can add a success notification here
+    if (onPasswordChange) {
+      onPasswordChange(passwordData);
+    }
   };
 
   return (

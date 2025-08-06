@@ -283,12 +283,7 @@ async function startServer() {
     });
     console.log("✅ Connected to MongoDB");
 
-    try {
-      await User.createDefaultAdmin();
-      console.log("✅ Admin user ensured");
-    } catch (adminError) {
-      console.error("⚠️ Admin creation error:", adminError);
-    }
+
 
     const https = require("https");
 

@@ -138,6 +138,7 @@ router.post(
 
     try {
       console.log("🚀 Consultation request body:", req.body);
+      console.log("📍 Location from request:", req.body.location);
       console.log("🔐 Authenticated user:", req.user);
 
       const consultationData = {
@@ -145,7 +146,9 @@ router.post(
         doctor: req.user.id,
       };
 
+      console.log("💾 Final consultation data before saving:", consultationData);
       const consultation = await Consultation.create(consultationData);
+      console.log("✅ Consultation created with location:", consultation.location);
       res.status(201).json(consultation);
     } catch (error) {
       console.error("❌ Error creating consultation:", error);

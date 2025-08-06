@@ -1,19 +1,24 @@
 const Doctor = require('../models/Doctor');
 const IcuConsultant = require('../models/IcuConsultant');
+const Location = require('../models/Location');
 
 // ===== DOCTOR CONTROLLERS =====
 
-// Get all doctors
+// Get all doctors (accessible to all authenticated users)
 const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.find().sort({ createdAt: -1 });
+    // Return only essential public fields for dropdown usage
+    const doctors = await Doctor.find()
+      .select('name _id') // Only return name and _id
+      .sort({ name: 1 }); // Sort alphabetically by name for better UX
+    
     res.status(200).json(doctors);
   } catch (error) {
     console.error('Error fetching doctors:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch doctors',
-      error: error.message 
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
@@ -135,17 +140,21 @@ const deleteDoctor = async (req, res) => {
 
 // ===== ICU CONSULTANT CONTROLLERS =====
 
-// Get all ICU consultants
+// Get all ICU consultants (accessible to all authenticated users)
 const getAllIcuConsultants = async (req, res) => {
   try {
-    const icuConsultants = await IcuConsultant.find().sort({ createdAt: -1 });
+    // Return only essential public fields for dropdown usage
+    const icuConsultants = await IcuConsultant.find()
+      .select('name _id') // Only return name and _id
+      .sort({ name: 1 }); // Sort alphabetically by name for better UX
+    
     res.status(200).json(icuConsultants);
   } catch (error) {
     console.error('Error fetching ICU consultants:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch ICU consultants',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
@@ -265,6 +274,176 @@ const deleteIcuConsultant = async (req, res) => {
   }
 };
 
+// ===== LOCATION CONTROLLERS =====
+
+// Get all locations (accessible to all authenticated users)
+const getAllLocations = async (req, res) => {
+  try {
+    // Return only essential public fields for dropdown usage
+    const locations = await Location.find()
+      .select('name status _id') // Return name, status and _id
+      .sort({ name: 1 }); // Sort alphabetically by name for better UX
+    
+    res.status(200).json(locations);
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch locations',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
+// Create new location
+const createLocation = async (req, res) => {
+  try {
+    const { name, status = 'active' } = req.body;
+    
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location name is required'
+      });
+    }
+
+    // Check if location already exists
+    const existingLocation = await Location.findOne({ name: name.trim() });
+    if (existingLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location with this name already exists'
+      });
+    }
+
+    const location = new Location({
+      name: name.trim(),
+      status
+    });
+
+    const savedLocation = await location.save();
+    res.status(201).json(savedLocation);
+  } catch (error) {
+    console.error('Error creating location:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create location',
+      error: error.message
+    });
+  }
+};
+
+// Update location
+const updateLocation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, status } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location name is required'
+      });
+    }
+
+    // Check if location exists
+    const existingLocation = await Location.findById(id);
+    if (!existingLocation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Location not found'
+      });
+    }
+
+    // Check if name already exists for another location
+    const duplicateLocation = await Location.findOne({ 
+      name: name.trim(), 
+      _id: { $ne: id } 
+    });
+    if (duplicateLocation) {
+      return res.status(400).json({
+        success: false,
+        message: 'Location with this name already exists'
+      });
+    }
+
+    const updatedLocation = await Location.findByIdAndUpdate(
+      id,
+      { name: name.trim(), status },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedLocation);
+  } catch (error) {
+    console.error('Error updating location:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update location',
+      error: error.message
+    });
+  }
+};
+
+// Delete location
+const deleteLocation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const location = await Location.findByIdAndDelete(id);
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: 'Location not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Location deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting location:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete location',
+      error: error.message
+    });
+  }
+};
+
+// Toggle location status (activate/deactivate)
+const toggleLocationStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const location = await Location.findById(id);
+    if (!location) {
+      return res.status(404).json({
+        success: false,
+        message: 'Location not found'
+      });
+    }
+
+    // Toggle status
+    const newStatus = location.status === 'active' ? 'inactive' : 'active';
+    
+    const updatedLocation = await Location.findByIdAndUpdate(
+      id,
+      { status: newStatus },
+      { new: true, runValidators: true }
+    );
+
+    res.status(200).json(updatedLocation);
+  } catch (error) {
+    console.error('Error toggling location status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to toggle location status',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   // Doctor controllers
   getAllDoctors,
@@ -276,5 +455,12 @@ module.exports = {
   getAllIcuConsultants,
   createIcuConsultant,
   updateIcuConsultant,
-  deleteIcuConsultant
+  deleteIcuConsultant,
+  
+  // Location controllers
+  getAllLocations,
+  createLocation,
+  updateLocation,
+  deleteLocation,
+  toggleLocationStatus
 }; 

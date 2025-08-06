@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
 import { FaLock, FaEye, FaEyeSlash, FaSpinner } from "react-icons/fa";
+import { authAPI } from "../services/api";
 
 const ChangePasswordModal = ({ show, onHide, onSave }) => {
   const [formData, setFormData] = useState({
@@ -49,10 +50,6 @@ const ChangePasswordModal = ({ show, onHide, onSave }) => {
       setError("New passwords do not match");
       return false;
     }
-    if (formData.newPassword.length < 6) {
-      setError("New password must be at least 6 characters long");
-      return false;
-    }
     if (formData.currentPassword === formData.newPassword) {
       setError("New password must be different from current password");
       return false;
@@ -71,8 +68,13 @@ const ChangePasswordModal = ({ show, onHide, onSave }) => {
     }
 
     try {
-      // TODO: Implement actual API call to change password
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
+      // Call the change password API
+      const response = await authAPI.changePassword({
+        oldPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      });
+      
+      console.log("Password change successful:", response.data);
       
       // Success
       onSave({
@@ -93,7 +95,8 @@ const ChangePasswordModal = ({ show, onHide, onSave }) => {
       });
       onHide();
     } catch (err) {
-      setError("Failed to change password. Please try again.");
+      console.error("Password change error:", err);
+      setError(err.message || "Failed to change password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -175,9 +178,7 @@ const ChangePasswordModal = ({ show, onHide, onSave }) => {
                 {showPasswords.new ? <FaEyeSlash /> : <FaEye />}
               </Button>
             </div>
-            <Form.Text className="text-muted">
-              Password must be at least 6 characters long
-            </Form.Text>
+
           </Form.Group>
 
           <Form.Group className="mb-3">
