@@ -37,6 +37,7 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaExclamationCircle,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import {
   consultationAPI,
@@ -353,12 +354,14 @@ const Home = () => {
           icuConsultantName: formData.icuConsultantName.map(consultant => consultant.label).join(', '), // Convert array to comma-separated string
           department: formData.department,
           conditionType: formData.conditionType,
+          location: user.location, // Include user's location
           date: new Date().toISOString(),
           recordingDuration: recordingTime,
           status: "completed",
         };
 
-        console.log("Creating consultation...");
+        console.log("Creating consultation with location:", user.location);
+        console.log("Full consultation payload:", consultationData);
         const consultationResponse = await consultationAPI.create(consultationData);
         
         if (!consultationResponse.data || !consultationResponse.data._id) {
@@ -431,7 +434,7 @@ const Home = () => {
 
       if (response.data && response.data.success) {
         console.log("✅ Video uploaded successfully:", response.data);
-        setSuccess(`📁 Video saved successfully as ${consultationId}.webm!`);
+        setSuccess(`📁 Video saved successfully`);
       } else {
         throw new Error(response.data?.message || "Video upload failed");
       }
@@ -488,6 +491,11 @@ const Home = () => {
     console.log("Profile updated:", updatedData);
     setSuccess("Profile updated successfully!");
     setShowEditProfile(false);
+  };
+
+  const handlePasswordChangeSuccess = (passwordData) => {
+    console.log("Password changed successfully:", passwordData);
+    setSuccess("Password changed successfully!");
   };
 
   // Handle click outside to close profile dropdown
@@ -644,18 +652,23 @@ const Home = () => {
                             Record a new patient consultation
                           </p>
                         </motion.div>
+
+                        {/* Location Display */}
                         <motion.div
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="d-flex gap-2"
+                          initial={{ x: 20, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: 0.6, duration: 0.5 }}
+                          className="d-flex align-items-center bg-light border rounded-pill px-3 py-2 shadow-sm"
+                          style={{
+                            background: "rgba(255, 255, 255, 0.9)",
+                            backdropFilter: "blur(5px)",
+                            border: "1px solid rgba(0, 0, 0, 0.1)",
+                          }}
                         >
-                          <Button
-                            variant="primary"
-                            onClick={() => navigate("/report")}
-                          >
-                            <FaFileAlt className="me-2" />
-                            Reports
-                          </Button>
+                          <FaMapMarkerAlt className="text-danger me-2" size={14} />
+                          <span className="fw-bold text-dark" style={{ fontSize: "0.9rem" }}>
+                            {user?.location || "N/A"}
+                          </span>
                         </motion.div>
                       </div>
 
@@ -1302,64 +1315,167 @@ const Home = () => {
         onClose={closeUserProfile}
         onLogout={handleLogout}
         onEditProfile={handleEditProfile}
+        onPasswordChange={handlePasswordChangeSuccess}
         user={user}
       />
 
-      {/* Masters Button - Admin Only */}
-      {user?.role === 'admin' && (
+      {/* Unified Navigation Section - Desktop */}
+      <div className="d-none d-md-block">
+        {/* Reports Button */}
         <motion.div
           className="position-fixed"
           style={{
             top: showUserProfile ? "280px" : "80px",
             right: "20px",
             zIndex: 1050,
-            minWidth: "320px",
             transition: "top 0.3s ease",
           }}
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.98 }}
         >
-          <Card
-            className="shadow-lg border-0"
+          <motion.button
+            onClick={() => navigate('/report')}
+            className="btn btn-light d-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm border-0"
             style={{
-              borderRadius: "16px",
-              background: "rgba(255, 255, 255, 0.98)",
-              backdropFilter: "blur(15px)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              cursor: "pointer",
-              transition: "all 0.3s ease",
+              background: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(10px)",
+              minWidth: "140px",
             }}
-            onClick={() => navigate('/masters')}
+            whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+            whileTap={{ scale: 0.95 }}
           >
-            <Card.Body className="p-4">
-              <div className="d-flex align-items-center">
-                <div
-                  className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                  style={{
-                    width: "60px",
-                    height: "60px",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    color: "white",
-                    fontSize: "1.2rem",
-                    fontWeight: "bold",
-                  }}
-                >
-                  <FaCog />
-                </div>
-                <div className="flex-grow-1">
-                  <h6 className="mb-0 fw-bold text-dark">
-                    Masters
-                  </h6>
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
+            <div
+              className="rounded-circle d-flex align-items-center justify-content-center"
+              style={{
+                width: "32px",
+                height: "32px",
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                fontSize: "0.8rem",
+                fontWeight: "bold",
+              }}
+            >
+              <FaFileAlt size={14} />
+            </div>
+            <span className="fw-medium text-dark" style={{ fontSize: "0.9rem" }}>
+              Reports
+            </span>
+          </motion.button>
         </motion.div>
-      )}
+
+        {/* Masters Button - Admin Only */}
+        {user?.role === 'admin' && (
+          <motion.div
+            className="position-fixed"
+            style={{
+              top: showUserProfile ? "340px" : "140px",
+              right: "20px",
+              zIndex: 1050,
+              transition: "top 0.3s ease",
+            }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <motion.button
+              onClick={() => navigate('/masters')}
+              className="btn btn-light d-flex align-items-center gap-2 px-3 py-2 rounded-pill shadow-sm border-0"
+              style={{
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(10px)",
+                minWidth: "140px",
+              }}
+              whileHover={{ scale: 1.05, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  fontSize: "0.8rem",
+                  fontWeight: "bold",
+                }}
+              >
+                <FaCog size={14} />
+              </div>
+              <span className="fw-medium text-dark" style={{ fontSize: "0.9rem" }}>
+                Masters
+              </span>
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Unified Navigation Section - Mobile */}
+      <div className="d-md-none">
+        {/* Reports Button - Mobile */}
+        <motion.div
+          className="position-fixed"
+          style={{
+            top: showUserProfile ? "280px" : "80px",
+            right: "15px",
+            zIndex: 1050,
+            transition: "top 0.3s ease",
+          }}
+          initial={{ opacity: 0, y: -20, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+        >
+          <motion.button
+            onClick={() => navigate('/report')}
+            className="btn btn-light rounded-circle shadow-sm border-0 d-flex align-items-center justify-content-center"
+            style={{
+              width: "48px",
+              height: "48px",
+              background: "rgba(255, 255, 255, 0.95)",
+              backdropFilter: "blur(10px)",
+            }}
+            whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+            whileTap={{ scale: 0.9 }}
+          >
+            <FaFileAlt size={20} className="text-primary" />
+          </motion.button>
+        </motion.div>
+
+        {/* Masters Button - Admin Only */}
+        {user?.role === 'admin' && (
+          <motion.div
+            className="position-fixed"
+            style={{
+              top: showUserProfile ? "340px" : "140px",
+              right: "15px",
+              zIndex: 1050,
+              transition: "top 0.3s ease",
+            }}
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+          >
+            <motion.button
+              onClick={() => navigate('/masters')}
+              className="btn btn-light rounded-circle shadow-sm border-0 d-flex align-items-center justify-content-center"
+              style={{
+                width: "48px",
+                height: "48px",
+                background: "rgba(255, 255, 255, 0.95)",
+                backdropFilter: "blur(10px)",
+              }}
+              whileHover={{ scale: 1.1, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FaCog size={20} className="text-primary" />
+            </motion.button>
+          </motion.div>
+        )}
+      </div>
 
       {/* Edit Profile Modal */}
       <EditProfileModal

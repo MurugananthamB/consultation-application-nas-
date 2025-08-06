@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Please provide a password'],
-    minlength: 6,
     select: false
   },
   role: {
@@ -105,15 +104,15 @@ userSchema.statics.createDefaultAdmin = async function() {
       console.log('Default admin user created successfully');
     } else {
       console.log('Admin user already exists');
-      console.log('Admin user details:', {
-        id: adminExists._id,
-        doctorId: adminExists.doctorId,
-        role: adminExists.role
-      });
     }
     
     return true;
   } catch (error) {
+    // Handle duplicate key error specifically
+    if (error.code === 11000) {
+      console.log('Admin user already exists (duplicate key)');
+      return true;
+    }
     console.error('Error creating admin user:', error);
     throw error;
   }
@@ -122,8 +121,15 @@ userSchema.statics.createDefaultAdmin = async function() {
 const User = mongoose.model('User', userSchema);
 
 // Create default admin when the application starts
-mongoose.connection.once('open', () => {
-  User.createDefaultAdmin();
+mongoose.connection.once('open', async () => {
+  try {
+    await User.createDefaultAdmin();
+  } catch (error) {
+    // Silently handle duplicate key errors - admin already exists
+    if (error.code !== 11000) {
+      console.error('⚠️ Unexpected error creating admin:', error.message);
+    }
+  }
 });
 
 module.exports = User;

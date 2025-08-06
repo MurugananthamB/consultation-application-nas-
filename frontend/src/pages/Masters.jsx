@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Form, ListGroup, Alert } from 'react-bootstrap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaUserMd, FaUserNurse, FaSave, FaTimes, FaEdit, FaTrash, FaSpinner } from 'react-icons/fa';
+import { FaArrowLeft, FaUserMd, FaUserNurse, FaSave, FaTimes, FaEdit, FaTrash, FaSpinner, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../services/api';
 
@@ -11,7 +11,7 @@ const Masters = () => {
   const { user } = useAuth();
   
   // State for current view
-  const [currentView, setCurrentView] = useState('menu'); // 'menu', 'doctors', 'icu'
+  const [currentView, setCurrentView] = useState('menu'); // 'menu', 'doctors', 'icu', 'locations'
   
   // State for doctors management
   const [doctors, setDoctors] = useState([]);
@@ -26,6 +26,13 @@ const Masters = () => {
   const [editingIcu, setEditingIcu] = useState(null);
   const [icuLoading, setIcuLoading] = useState(false);
   const [icuError, setIcuError] = useState('');
+  
+  // State for locations management
+  const [locations, setLocations] = useState([]);
+  const [locationForm, setLocationForm] = useState({ name: '', status: 'active' });
+  const [editingLocation, setEditingLocation] = useState(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationError, setLocationError] = useState('');
 
   // Redirect if not admin
   React.useEffect(() => {
@@ -85,12 +92,35 @@ const Masters = () => {
     }
   };
 
+  // Fetch locations
+  const fetchLocations = async () => {
+    setLocationLoading(true);
+    setLocationError('');
+    try {
+      const response = await fetch(`${API_URL}/masters/locations`, {
+        headers: getAuthHeaders()
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLocations(data);
+      } else {
+        setLocationError('Failed to fetch locations');
+      }
+    } catch (error) {
+      setLocationError('Error fetching locations');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
   // Load data when view changes
   useEffect(() => {
     if (currentView === 'doctors') {
       fetchDoctors();
     } else if (currentView === 'icu') {
       fetchIcuConsultants();
+    } else if (currentView === 'locations') {
+      fetchLocations();
     }
   }, [currentView]);
 
@@ -274,12 +304,138 @@ const Masters = () => {
     }
   };
 
+  // Location management functions
+  const handleLocationFormChange = (e) => {
+    setLocationForm({
+      ...locationForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleLocationSave = async () => {
+    if (!locationForm.name.trim()) return;
+    
+    setLocationLoading(true);
+    setLocationError('');
+    
+    try {
+      const url = editingLocation 
+        ? `${API_URL}/masters/locations/${editingLocation._id}`
+        : `${API_URL}/masters/locations`;
+      
+      const method = editingLocation ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: getAuthHeaders(),
+        body: JSON.stringify(locationForm)
+      });
+      
+      if (response.ok) {
+        const savedLocation = await response.json();
+        
+        if (editingLocation) {
+          // Update existing location
+          setLocations(locations.map(loc => 
+            loc._id === editingLocation._id ? savedLocation : loc
+          ));
+        } else {
+          // Add new location
+          setLocations([...locations, savedLocation]);
+        }
+        
+        setLocationForm({ name: '', status: 'active' });
+        setEditingLocation(null);
+      } else {
+        const errorData = await response.json();
+        setLocationError(errorData.message || 'Failed to save location');
+      }
+    } catch (error) {
+      setLocationError('Error saving location');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleLocationClear = () => {
+    setLocationForm({ name: '', status: 'active' });
+    setEditingLocation(null);
+  };
+
+  const handleLocationEdit = (location) => {
+    setLocationForm({ name: location.name, status: location.status });
+    setEditingLocation(location);
+  };
+
+  const handleLocationDelete = async (locationId) => {
+    setLocationLoading(true);
+    setLocationError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/masters/locations/${locationId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        setLocations(locations.filter(loc => loc._id !== locationId));
+        if (editingLocation?._id === locationId) {
+          setEditingLocation(null);
+          setLocationForm({ name: '', status: 'active' });
+        }
+      } else {
+        const errorData = await response.json();
+        setLocationError(errorData.message || 'Failed to delete location');
+      }
+    } catch (error) {
+      setLocationError('Error deleting location');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  const handleLocationToggleStatus = async (locationId) => {
+    setLocationLoading(true);
+    setLocationError('');
+    
+    try {
+      const response = await fetch(`${API_URL}/masters/locations/${locationId}/toggle-status`, {
+        method: 'PATCH',
+        headers: getAuthHeaders()
+      });
+      
+      if (response.ok) {
+        const updatedLocation = await response.json();
+        setLocations(locations.map(loc => 
+          loc._id === locationId ? updatedLocation : loc
+        ));
+        
+        // Update editing form if this location is being edited
+        if (editingLocation?._id === locationId) {
+          setLocationForm({ 
+            name: updatedLocation.name, 
+            status: updatedLocation.status 
+          });
+        }
+      } else {
+        const errorData = await response.json();
+        setLocationError(errorData.message || 'Failed to toggle location status');
+      }
+    } catch (error) {
+      setLocationError('Error toggling location status');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
   const handleBackToMenu = () => {
     setCurrentView('menu');
     setDoctorForm({ name: '' });
     setIcuForm({ name: '' });
+    setLocationForm({ name: '', status: 'active' });
     setEditingDoctor(null);
     setEditingIcu(null);
+    setEditingLocation(null);
   };
 
 
@@ -290,6 +446,10 @@ const Masters = () => {
 
   const handleIcuConsultantClick = () => {
     setCurrentView('icu');
+  };
+
+  const handleLocationsClick = () => {
+    setCurrentView('locations');
   };
 
   // Render Doctor Management Section
@@ -652,7 +812,218 @@ const Masters = () => {
     </motion.div>
   );
 
-  
+  // Render Location Management Section
+  const renderLocationSection = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="mt-4"
+    >
+      <Card
+        className="shadow-lg border-0"
+        style={{
+          borderRadius: "16px",
+          background: "rgba(255, 255, 255, 0.98)",
+          backdropFilter: "blur(15px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+        }}
+      >
+        <Card.Body className="p-4">
+          <h4 className="mb-4 fw-bold text-dark">Location Master</h4>
+          
+          <Row className="g-4">
+            {/* Left Section - Form */}
+            <Col md={6}>
+              <Card
+                className="shadow-sm border-0 h-100"
+                style={{
+                  borderRadius: "12px",
+                  background: "rgba(248, 250, 252, 0.8)",
+                  border: "1px solid rgba(226, 232, 240, 0.8)",
+                }}
+              >
+                <Card.Body className="p-4">
+                  <h5 className="mb-3 fw-bold text-dark">Add New Location</h5>
+                  
+                  {locationError && (
+                    <Alert variant="danger" className="mb-3">
+                      {locationError}
+                    </Alert>
+                  )}
+                  
+                  <Form>
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-bold">Location Name</Form.Label>
+                      <Form.Control
+                        type="text"
+                        name="name"
+                        value={locationForm.name}
+                        onChange={handleLocationFormChange}
+                        placeholder="Enter location name"
+                        style={{
+                          borderRadius: "8px",
+                          border: "2px solid #e2e8f0",
+                          fontSize: "0.9rem",
+                          padding: "8px 12px",
+                        }}
+                      />
+                    </Form.Group>
+
+                    <Form.Group className="mb-3">
+                      <Form.Label className="fw-bold">Status</Form.Label>
+                      <Form.Select
+                        name="status"
+                        value={locationForm.status}
+                        onChange={handleLocationFormChange}
+                        style={{
+                          borderRadius: "8px",
+                          border: "2px solid #e2e8f0",
+                          fontSize: "0.9rem",
+                          padding: "8px 12px",
+                        }}
+                      >
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </Form.Select>
+                    </Form.Group>
+                    
+                    <div className="d-flex gap-2 mt-4">
+                      <Button
+                        variant="primary"
+                        onClick={handleLocationSave}
+                        disabled={locationLoading}
+                        className="flex-fill d-flex align-items-center justify-content-center"
+                        style={{
+                          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                          border: "none",
+                          borderRadius: "8px",
+                          padding: "10px 20px",
+                          fontSize: "0.9rem",
+                          fontWeight: "500",
+                        }}
+                      >
+                        {locationLoading ? (
+                          <FaSpinner className="me-2 fa-spin" />
+                        ) : (
+                          <FaSave className="me-2" />
+                        )}
+                        {editingLocation ? 'Update' : 'Save'}
+                      </Button>
+                      <Button
+                        variant="outline-secondary"
+                        onClick={handleLocationClear}
+                        className="flex-fill d-flex align-items-center justify-content-center"
+                        style={{
+                          borderRadius: "8px",
+                          padding: "10px 20px",
+                          fontSize: "0.9rem",
+                          fontWeight: "500",
+                        }}
+                      >
+                        <FaTimes className="me-2" />
+                        Clear
+                      </Button>
+                    </div>
+                  </Form>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            {/* Right Section - List */}
+            <Col md={6}>
+              <Card
+                className="shadow-sm border-0 h-100"
+                style={{
+                  borderRadius: "12px",
+                  background: "rgba(248, 250, 252, 0.8)",
+                  border: "1px solid rgba(226, 232, 240, 0.8)",
+                }}
+              >
+                <Card.Body className="p-4">
+                  <h5 className="mb-3 fw-bold text-dark">Existing Locations</h5>
+                  
+                  <div style={{ maxHeight: "300px", overflowY: "auto" }}>
+                    {locationLoading ? (
+                      <div className="text-center py-4">
+                        <FaSpinner className="fa-spin me-2" />
+                        <span>Loading locations...</span>
+                      </div>
+                    ) : locations.length === 0 ? (
+                      <div className="text-center text-muted py-4">
+                        <p>No locations found</p>
+                      </div>
+                    ) : (
+                      <ListGroup variant="flush">
+                        {locations.map((location) => (
+                          <ListGroup.Item
+                            key={location._id}
+                            className="border-0 mb-2 p-3"
+                            style={{
+                              background: "rgba(255, 255, 255, 0.8)",
+                              borderRadius: "8px",
+                              cursor: "pointer",
+                              transition: "all 0.2s ease",
+                            }}
+                            onClick={() => handleLocationEdit(location)}
+                          >
+                            <div className="d-flex justify-content-between align-items-center">
+                              <div className="flex-grow-1">
+                                <h6 className="mb-1 fw-bold text-dark">{location.name}</h6>
+                                <small className={`badge ${location.status === 'active' ? 'bg-success' : 'bg-secondary'}`}>
+                                  {location.status}
+                                </small>
+                              </div>
+                              <div className="d-flex gap-2">
+                                <Button
+                                  variant={location.status === 'active' ? 'outline-warning' : 'outline-success'}
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLocationToggleStatus(location._id);
+                                  }}
+                                  style={{ borderRadius: "6px", padding: "4px 8px" }}
+                                  title={`${location.status === 'active' ? 'Deactivate' : 'Activate'} location`}
+                                >
+                                  {location.status === 'active' ? <FaToggleOn size={12} /> : <FaToggleOff size={12} />}
+                                </Button>
+                                <Button
+                                  variant="outline-primary"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLocationEdit(location);
+                                  }}
+                                  style={{ borderRadius: "6px", padding: "4px 8px" }}
+                                >
+                                  <FaEdit size={12} />
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLocationDelete(location._id);
+                                  }}
+                                  style={{ borderRadius: "6px", padding: "4px 8px" }}
+                                >
+                                  <FaTrash size={12} />
+                                </Button>
+                              </div>
+                            </div>
+                          </ListGroup.Item>
+                        ))}
+                      </ListGroup>
+                    )}
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+    </motion.div>
+  );
 
   // Render main menu
   return (
@@ -822,6 +1193,55 @@ const Masters = () => {
                     </Card>
                   </motion.div>
                 </Col>
+
+                <Col md={6} lg={4}>
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.8, duration: 0.5 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Card
+                      className="shadow-lg border-0 h-100"
+                      style={{
+                        borderRadius: "16px",
+                        background: "rgba(255, 255, 255, 0.98)",
+                        backdropFilter: "blur(15px)",
+                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                        cursor: "pointer",
+                        transition: "all 0.3s ease",
+                      }}
+                      onClick={handleLocationsClick}
+                    >
+                      <Card.Body className="p-4">
+                        <div className="d-flex align-items-center mb-3">
+                          <div
+                            className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                            style={{
+                              width: "50px",
+                              height: "50px",
+                              background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                              color: "white",
+                              fontSize: "1.2rem",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            <FaMapMarkerAlt />
+                          </div>
+                          <div className="flex-grow-1">
+                            <h6 className="mb-1 fw-bold text-dark">
+                              Location
+                            </h6>
+                            <small className="text-muted">
+                              Manage hospital locations and branches
+                            </small>
+                          </div>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </motion.div>
+                </Col>
               </Row>
             </Card.Body>
           </Card>
@@ -851,6 +1271,18 @@ const Masters = () => {
             transition={{ duration: 0.3 }}
           >
             {renderIcuSection()}
+          </motion.div>
+        )}
+        
+        {currentView === 'locations' && (
+          <motion.div
+            key="locations-section"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            {renderLocationSection()}
           </motion.div>
         )}
       </AnimatePresence>

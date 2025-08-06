@@ -50,6 +50,7 @@ const Report = () => {
     uhidId: "",
     department: "",
     conditionType: "",
+    location: "",
   });
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,6 +83,16 @@ const Report = () => {
   const [editMastersError, setEditMastersError] = useState("");
   const [editDoctorsLoaded, setEditDoctorsLoaded] = useState(false);
   const [editIcuConsultantsLoaded, setEditIcuConsultantsLoaded] = useState(false);
+
+  // ✅ Helper function to get unique locations from consultations
+  const getUniqueLocations = () => {
+    const locations = allConsultations
+      .map(consultation => consultation.location)
+      .filter(location => location && location.trim() !== "")
+      .filter((location, index, array) => array.indexOf(location) === index)
+      .sort();
+    return locations;
+  };
 
   // ✅ Helper function to validate and extract consultation data
   const extractConsultationData = (responseData) => {
@@ -191,6 +202,7 @@ const Report = () => {
           department: filters.department,
           doctorName: filters.doctorName,
           conditionType: filters.conditionType,
+          location: filters.location,
           sortField: sortConfig.field,
           sortDirection: sortConfig.direction,
         },
@@ -282,6 +294,7 @@ const Report = () => {
       uhidId: "",
       department: "",
       conditionType: "",
+      location: "",
     });
     setCurrentPage(1);
     console.log("🧹 Clearing filters, reset to page 1");
@@ -319,6 +332,7 @@ const Report = () => {
             "Doctor",
             "Attender",
             "ICU Consultant",
+            "Location",
             "Duration",
             "Condition",
           ],
@@ -339,8 +353,9 @@ const Report = () => {
           item.doctorName || "-",
           item.attenderName || "-",
           item.icuConsultantName || "-",
+          item.location || "-",
           `${item.recordingDuration || 0} seconds`,
-          item.conditionType ? item.conditionType : "N/A",
+          item.conditionType || "N/A",
         ]),
         theme: "grid",
         headStyles: {
@@ -365,15 +380,16 @@ const Report = () => {
           lineWidth: 0.1,
         },
         columnStyles: {
-          0: { cellWidth: 22 }, // Date & Time
-          1: { cellWidth: 15 }, // UHID
-          2: { cellWidth: 22 }, // Patient Name
-          3: { cellWidth: 18 }, // Department
-          4: { cellWidth: 18 }, // Doctor
-          5: { cellWidth: 18 }, // Attender
-          6: { cellWidth: 18 }, // ICU Consultant
-          7: { cellWidth: 15 }, // Duration
-          8: { cellWidth: 12 }, // Condition
+          0: { cellWidth: 20 }, // Date & Time
+          1: { cellWidth: 14 }, // UHID
+          2: { cellWidth: 20 }, // Patient Name
+          3: { cellWidth: 16 }, // Department
+          4: { cellWidth: 16 }, // Doctor
+          5: { cellWidth: 16 }, // Attender
+          6: { cellWidth: 16 }, // ICU Consultant
+          7: { cellWidth: 14 }, // Location
+          8: { cellWidth: 14 }, // Duration
+          9: { cellWidth: 12 }, // Condition
         },
         tableWidth: "wrap",
         horizontalPageBreak: false,
@@ -420,8 +436,9 @@ const Report = () => {
         "Doctor": item.doctorName || "-",
         "Attender": item.attenderName || "-",
         "ICU Consultant": item.icuConsultantName || "-",
+        "Location": item.location || "-",
         "Duration": `${item.recordingDuration || 0} seconds`,
-        "Condition": item.conditionType ? item.conditionType : "N/A",
+        "Condition": item.conditionType || "N/A",
       }))
     );
 
@@ -434,6 +451,7 @@ const Report = () => {
       { wch: 15 }, // Doctor
       { wch: 15 }, // Attender
       { wch: 15 }, // ICU Consultant
+      { wch: 12 }, // Location
       { wch: 12 }, // Duration
       { wch: 10 }, // Condition
     ];
@@ -1038,6 +1056,33 @@ const Report = () => {
                         <Form.Label
                           style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
                         >
+                          📍 Location
+                        </Form.Label>
+                        <Form.Select
+                          name="location"
+                          value={filters.location}
+                          onChange={handleFilterChange}
+                          style={{
+                            borderRadius: "8px",
+                            border: "2px solid #e2e8f0",
+                            fontSize: "0.9rem",
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <option value="">All Locations</option>
+                          {getUniqueLocations().map((location) => (
+                            <option key={location} value={location}>
+                               {location}
+                            </option>
+                          ))}
+                        </Form.Select>
+                      </Form.Group>
+                    </div>
+                    <div style={{ minWidth: "160px", flex: "1 1 auto" }}>
+                      <Form.Group className="mb-0">
+                        <Form.Label
+                          style={{ fontWeight: "500", color: "#4a5568", fontSize: "0.9rem" }}
+                        >
                           🛏️ Condition
                         </Form.Label>
                         <Form.Select
@@ -1164,7 +1209,7 @@ const Report = () => {
                   <div
                     className="d-flex justify-content-between align-items-center mb-4"
                     style={{
-                      minWidth: "1400px",
+                      minWidth: "1520px",
                       padding: "0 15px",
                     }}
                   >
@@ -1277,7 +1322,7 @@ const Report = () => {
                   <Table
                     className="table table-hover mb-0"
                     style={{
-                      minWidth: "1400px",
+                      minWidth: "1520px",
                       width: "100%",
                       marginBottom: "0",
                       tableLayout: "fixed",
@@ -1380,6 +1425,20 @@ const Report = () => {
                           }}
                         >
                           ⚕️ ICU Consultant
+                        </th>
+                        <th
+                          onClick={() => handleSort("location")}
+                          style={{
+                            cursor: "pointer",
+                            padding: "15px",
+                            border: "none",
+                            width: "120px",
+                            minWidth: "120px",
+                          }}
+                        >
+                          📍 Location{" "}
+                          {sortConfig.field === "location" &&
+                            (sortConfig.direction === "asc" ? "↑" : "↓")}
                         </th>
                         <th
                           onClick={() => handleSort("recordingDuration")}
@@ -1583,6 +1642,35 @@ const Report = () => {
                               className="badge"
                               style={{
                                 background:
+                                  "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                                color: "white",
+                                padding: "6px 10px",
+                                                                borderRadius: "6px",
+                                fontSize: "0.75rem",
+                                whiteSpace: "normal",
+                                wordWrap: "break-word",
+                                wordBreak: "break-word",
+                                textAlign: "center",
+                                display: "inline-block",
+                                lineHeight: "1.2",
+                                maxWidth: "100%",
+                              }}
+                            >
+                              📍 {consultation.location || "N/A"}
+                            </span>
+                          </td>
+                          <td
+                            style={{
+                              padding: "15px",
+                              verticalAlign: "middle",
+                              width: "120px",
+                              minWidth: "120px",
+                            }}
+                          >
+                            <span
+                              className="badge"
+                              style={{
+                                background:
                                   "linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)",
                                 color: "white",
                                 padding: "6px 10px",
@@ -1704,7 +1792,7 @@ const Report = () => {
                   <div
                     className="d-flex justify-content-between align-items-center mt-4"
                     style={{
-                      minWidth: "1400px",
+                      minWidth: "1520px",
                       padding: "0 15px",
                     }}
                   >

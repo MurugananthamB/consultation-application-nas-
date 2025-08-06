@@ -15,7 +15,7 @@ router.post(
     // Validate required fields
     body('name').notEmpty().withMessage('Name is required'),
     body('doctorId').notEmpty().withMessage('Doctor ID is required'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+    body('password').notEmpty().withMessage('Password is required'),
     body('role').optional().isIn(['doctor', 'admin']).withMessage('Role must be either doctor or admin'),
     body('location').optional().isString().withMessage('Location must be a string'),
   ],
@@ -205,5 +205,82 @@ router.post('/logout', protect, (req, res) => {
   // Invalidate the token or perform any necessary logout operations
   res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
+
+// @route   PUT api/auth/change-password
+// @desc    Change user password
+// @access  Private
+router.put(
+  '/change-password',
+  protect,
+  [
+    body('oldPassword').notEmpty().withMessage('Old password is required'),
+  ],
+  async (req, res) => {
+    // Validate input data
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('Change password validation errors:', errors.array());
+      return res.status(400).json({
+        message: 'Please provide valid input data',
+        errors: errors.array(),
+      });
+    }
+
+    try {
+      const { oldPassword, newPassword } = req.body;
+      console.log('Change password attempt for user:', req.user.id);
+
+      // Handle admin user (special case)
+      if (req.user.id === 'admin') {
+        if (oldPassword !== 'admin123') {
+          console.log('Admin old password mismatch');
+          return res.status(400).json({ message: 'Current password is incorrect' });
+        }
+        
+        // For admin, we can't update the password in DB since it's hardcoded
+        // Just return success for now (in a real app, you'd want to store admin password in DB)
+        console.log('Admin password change requested (not implemented for hardcoded admin)');
+        return res.status(200).json({
+          success: true,
+          message: 'Password change request received. Admin password changes require manual intervention.'
+        });
+      }
+
+      // For regular users, find the user with password field
+      const user = await User.findById(req.user.id).select('+password');
+      if (!user) {
+        console.log('User not found for password change:', req.user.id);
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Verify old password
+      console.log('Verifying old password for user:', user.doctorId);
+      const isOldPasswordValid = await user.comparePassword(oldPassword);
+      if (!isOldPasswordValid) {
+        console.log('Old password verification failed for user:', user.doctorId);
+        return res.status(400).json({ message: 'Current password is incorrect' });
+      }
+
+      // Update password
+      console.log('Updating password for user:', user.doctorId);
+      user.password = newPassword; // This will trigger the pre-save middleware to hash it
+      await user.save();
+
+      console.log('Password updated successfully for user:', user.doctorId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } catch (err) {
+      console.error('Change password error:', err);
+      res.status(500).json({
+        success: false,
+        message: 'Server error during password change',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+      });
+    }
+  }
+);
 
 module.exports = router;

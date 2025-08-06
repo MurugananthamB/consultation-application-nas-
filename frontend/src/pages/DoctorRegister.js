@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { Container, Form, Button, Card, Row, Col, Alert, InputGroup } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Form, Button, Card, Row, Col, Alert, InputGroup, Spinner } from 'react-bootstrap';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { FaUser, FaIdCard, FaLock, FaEye, FaEyeSlash, FaUserMd, FaMapMarkerAlt } from 'react-icons/fa';
 import { authAPI } from '../services/api';
+import api from '../services/api';
 
 const DoctorRegister = () => {
   const navigate = useNavigate();
@@ -18,6 +19,37 @@ const DoctorRegister = () => {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Location state
+  const [locations, setLocations] = useState([]);
+  const [locationsLoading, setLocationsLoading] = useState(true);
+  const [locationsError, setLocationsError] = useState('');
+
+  // Fetch locations on component mount
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        setLocationsLoading(true);
+        setLocationsError('');
+        
+        const response = await api.get('/masters/locations');
+        
+        // Filter only active locations and sort alphabetically
+        const activeLocations = response.data
+          .filter(location => location.status === 'active')
+          .sort((a, b) => a.name.localeCompare(b.name));
+        
+        setLocations(activeLocations);
+      } catch (err) {
+        console.error('Error fetching locations:', err);
+        setLocationsError('Failed to load locations. Please refresh the page.');
+      } finally {
+        setLocationsLoading(false);
+      }
+    };
+
+    fetchLocations();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -34,6 +66,10 @@ const DoctorRegister = () => {
     try {
       if (formData.password !== formData.confirmPassword) {
         throw new Error('Passwords do not match');
+      }
+      
+      if (!formData.location || formData.location.trim() === '') {
+        throw new Error('Please select a location');
       }
 
       const response = await authAPI.register({
@@ -176,17 +212,46 @@ const DoctorRegister = () => {
                             <span className="input-group-text bg-white border-end-0">
                               <FaMapMarkerAlt className="text-primary" />
                             </span>
-                            <Form.Control
-                              type="text"
-                              name="location"
-                              value={formData.location}
-                              onChange={handleChange}
-                              placeholder="Enter your location"
-                              required
-                              className="border-start-0"
-                              style={{ height: '50px' }}
-                            />
+                            {locationsLoading ? (
+                              <Form.Control
+                                as="div"
+                                className="border-start-0 d-flex align-items-center justify-content-center"
+                                style={{ height: '50px', backgroundColor: '#f8f9fa' }}
+                              >
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                <span className="text-muted">Loading locations...</span>
+                              </Form.Control>
+                            ) : locationsError ? (
+                              <Form.Control
+                                as="div"
+                                className="border-start-0 d-flex align-items-center"
+                                style={{ height: '50px', backgroundColor: '#f8d7da', color: '#721c24' }}
+                              >
+                                <small>{locationsError}</small>
+                              </Form.Control>
+                            ) : (
+                              <Form.Select
+                                name="location"
+                                value={formData.location}
+                                onChange={handleChange}
+                                required
+                                className="border-start-0"
+                                style={{ height: '50px' }}
+                              >
+                                <option value="">Select your location</option>
+                                {locations.map((location) => (
+                                  <option key={location._id} value={location.name}>
+                                    {location.name}
+                                  </option>
+                                ))}
+                              </Form.Select>
+                            )}
                           </div>
+                          {locationsError && (
+                            <Form.Text className="text-danger">
+                              <small>{locationsError}</small>
+                            </Form.Text>
+                          )}
                         </Form.Group>
                       </motion.div>
 
@@ -262,17 +327,17 @@ const DoctorRegister = () => {
                         transition={{ delay: 1.05, duration: 0.5 }}
                       >
                         <div className="d-grid gap-2">
-                          <Button
-                            variant="primary"
+                          <motion.button
                             type="submit"
                             disabled={loading}
-                            className="py-3"
+                            className="btn btn-primary py-3"
                             style={{
                               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                               border: 'none',
                               borderRadius: '10px',
                               fontSize: '1.1rem',
-                              fontWeight: 'bold'
+                              fontWeight: 'bold',
+                              width: '100%'
                             }}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
@@ -281,7 +346,7 @@ const DoctorRegister = () => {
                               <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
                             ) : null}
                             {loading ? 'Registering...' : 'Register'}
-                          </Button>
+                          </motion.button>
                         </div>
                       </motion.div>
 

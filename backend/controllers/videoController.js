@@ -131,14 +131,35 @@ exports.streamVideo = (req, res) => {
 
 
 /**
- * 📂 Get filtered consultation records
- * @route GET /api/videos?uhid=&patientName=&department=&doctorName=&dateFrom=&dateTo=
+ * 📂 Get filtered consultation records with role and location-based access control
+ * @route GET /api/videos/filter?uhid=&patientName=&department=&doctorName=&dateFrom=&dateTo=&location=
  */
 exports.getFilteredVideos = async (req, res) => {
   try {
-    const { dateFrom, dateTo, uhid, patientName, department, doctorName, conditionType } =
+    const { dateFrom, dateTo, uhid, patientName, department, doctorName, conditionType, location } =
       req.query;
     const query = {};
+
+    // 🔒 Role and location-based access control
+    const userRole = req.user.role;
+    const userLocation = req.user.location;
+
+    console.log(`🔐 User accessing reports: Role=${userRole}, Location=${userLocation}`);
+
+    // 🏥 Location-based filtering for non-admin users
+    if (userRole !== 'admin') {
+      // Normal users can only see consultations from their own location
+      if (userLocation) {
+        query.location = userLocation;
+        console.log(`🔒 Non-admin user restricted to location: ${userLocation}`);
+      } else {
+        // If user has no location, they get no results
+        console.log(`⚠️ Non-admin user has no location assigned, returning empty results`);
+        return res.json([]);
+      }
+    } else {
+      console.log(`👑 Admin user - access to all locations`);
+    }
 
     // 🔒 Safe regex
     const escapeRegex = (text) =>
@@ -162,11 +183,23 @@ exports.getFilteredVideos = async (req, res) => {
       query.doctorName = { $regex: escapeRegex(doctorName), $options: "i" };
     if (conditionType)
       query.conditionType = { $regex: escapeRegex(conditionType), $options: "i" };
+    
+    // 📍 Location filter (for admin users who want to filter by specific location)
+    if (location && userRole === 'admin') {
+      query.location = { $regex: escapeRegex(location), $options: "i" };
+    }
+
+    console.log(`🔍 Final query:`, JSON.stringify(query, null, 2));
 
     const results = await Consultation.find(query).sort({ createdAt: -1 });
+    
+    console.log(`📊 Returning ${results.length} consultation records`);
     res.json(results);
   } catch (error) {
     console.error("Error filtering consultations:", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ 
+      message: "Internal server error",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };

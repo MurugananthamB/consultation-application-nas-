@@ -42,6 +42,10 @@ const consultationSchema = new mongoose.Schema(
       trim: true,
       default: "normal"
     },
+    location: {
+      type: String,
+      trim: true,
+    },
     videoFileName: {
       type: String,
       trim: true,
