@@ -7,6 +7,11 @@ const doctorSchema = new mongoose.Schema({
     trim: true,
     unique: true
   },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
+  },
   createdAt: {
     type: Date,
     default: Date.now

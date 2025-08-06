@@ -20,12 +20,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['doctor', 'admin'],
-    default: 'doctor'
+    enum: ['user', 'admin'],
+    default: 'user'
   },
   location: {
     type: String,
     required: [true, 'Please provide your location']
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive'],
+    default: 'active'
   },
   createdAt: {
     type: Date,

@@ -31,7 +31,7 @@ import { saveAs } from "file-saver";
 import { consultationAPI, API_URL } from "../services/api";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import MultiSelect from "../components/MultiSelect";
+import MultiSelect from "../components/MultiSelect.js";
 
 const Report = () => {
   const navigate = useNavigate();
