@@ -22,6 +22,7 @@ FROM node:18
 # Install required tools
 RUN apt-get update && apt-get install -y \
   nginx \
+  cron \
   libnss3-tools \
   curl \
   ca-certificates && \
@@ -61,9 +62,31 @@ COPY --from=frontend-build /consultation-app/frontend/build/ /var/www/html
 # ✅ Copy custom NGINX config
 COPY frontend/nginx.conf /etc/nginx/nginx.conf
 
+# ------------------------------------
+# Setup cron job for NAS video transfer
+# ------------------------------------
+COPY script/move-to-nas.sh /script/move-to-nas.sh
+COPY script/cronfile /etc/cron.d/move-cron
+COPY script/entrypoint.sh /entrypoint.sh
+
+# Make shell script executable
+RUN chmod +x /script/move-to-nas.sh
+
+# Make shell script executable
+RUN chmod +x /entrypoint.sh
+
+# Set correct permissions for cron job file
+RUN chmod 0644 /etc/cron.d/move-cron
+
+# Ensure cron log directory exists
+RUN mkdir -p /script/logs
+
+
 # ✅ Expose HTTPS frontend and backend ports
 EXPOSE 443    
 EXPOSE 5000   
 
-# ✅ Start backend with nodemon and keep NGINX running
-CMD ["bash", "-c", "npx nodemon ./backend/server.js & nginx -g 'daemon off;'"]
+# ----------------------------------
+# Final CMD: Start cron, backend & nginx
+# ----------------------------------
+CMD ["/entrypoint.sh"]

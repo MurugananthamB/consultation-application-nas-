@@ -1,0 +1,1 @@
+*/2 * * * * root /script/move-to-nas.sh >> /script/logs/move.log 2>&1
