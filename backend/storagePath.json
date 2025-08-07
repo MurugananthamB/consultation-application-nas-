@@ -1,7 +1,7 @@
-{
-  "path": "Z:"
-}
-
 // {
-//   "path": "/mnt/nas/"
+//   "path": "Z:"
 // }
+
+{
+  "path": "/mnt/nas/"
+}
