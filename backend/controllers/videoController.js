@@ -2,21 +2,13 @@ const fs = require("fs");
 const path = require("path");
 const Consultation = require("../models/Consultation");
 
-// Load storage path configuration using environment variables
-// const getStoragePath = () => {
-//   // Use environment variables for Windows NAS configuration
-//   const nasMountPath = process.env.NAS_MOUNT_PATH || "Z:";
-//   const nasFolder = process.env.NAS_FOLDER || "Video Record";
-  
-//   // Construct the full NAS path
-//   const fullNasPath = path.join(nasMountPath, nasFolder);
-  
-//   console.log('📁 VideoController NAS Mount Path (ENV):', nasMountPath);
-//   console.log('📁 VideoController NAS Folder (ENV):', nasFolder);
-//   console.log('📁 VideoController Full NAS Path resolved:', fullNasPath);
-  
-//   return fullNasPath;
-// };
+// const getStoragePath = (reqDate) => {
+//     // Use environment variables for Windows NAS configuration
+//     const nasMountPath = process.env.NAS_MOUNT_PATH ;
+//     const nasFolder = process.env.NAS_FOLDER ;
+    
+//     // Construct the full NAS path
+//     const fullNasPath = path.join(nasMountPath, nasFolder);
 
 
 // Load storage path configuration using environment variables

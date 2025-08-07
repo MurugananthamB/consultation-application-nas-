@@ -515,6 +515,7 @@ const Report = () => {
       setCurrentVideoPath("");
       setVideoLoading(true);
       setShowVideoModal(true);
+      setEditConsultation(consultation); // Store consultation data for modal display
 
       if (!consultation._id || !consultation.date) {
         setVideoError("Consultation ID or date missing");
@@ -1951,6 +1952,7 @@ const Report = () => {
             }
             setCurrentVideoPath("");
             setShowVideoModal(false);
+            setEditConsultation(null); // Clear consultation data when modal is closed
           }}
           size="lg"
         >
@@ -1990,6 +1992,101 @@ const Report = () => {
             ) : (
               <div className="text-center py-5">
                 <p className="text-muted">No video available</p>
+              </div>
+            )}
+            
+            {/* Patient Information Section - Bottom */}
+            {editConsultation && (
+              <div 
+                className="mt-4 p-3" 
+                style={{
+                  background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+                  borderRadius: "10px",
+                  border: "2px solid #cbd5e0",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)"
+                }}
+              >
+                <div className="row">
+                  <div className="col-md-4">
+                    <div className="d-flex align-items-center mb-2">
+                      <span 
+                        className="badge me-2"
+                        style={{
+                          background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                          color: "white",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: "600"
+                        }}
+                      >
+                        🆔 UHID
+                      </span>
+                      <span 
+                        style={{
+                          fontWeight: "700",
+                          color: "#1e293b",
+                          fontSize: "1rem",
+                          fontFamily: "monospace"
+                        }}
+                      >
+                        {editConsultation.uhidId || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="d-flex align-items-center mb-2">
+                      <span 
+                        className="badge me-2"
+                        style={{
+                          background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                          color: "white",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: "600"
+                        }}
+                      >
+                        👤 Patient
+                      </span>
+                      <span 
+                        style={{
+                          fontWeight: "700",
+                          color: "#1e293b",
+                          fontSize: "1rem"
+                        }}
+                      >
+                        {editConsultation.patientName || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="col-md-4">
+                    <div className="d-flex align-items-center mb-2">
+                      <span 
+                        className="badge me-2"
+                        style={{
+                          background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                          color: "white",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: "600"
+                        }}
+                      >
+                        📍 Location
+                      </span>
+                      <span 
+                        style={{
+                          fontWeight: "700",
+                          color: "#1e293b",
+                          fontSize: "1rem"
+                        }}
+                      >
+                        {editConsultation.location || "N/A"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </Modal.Body>
