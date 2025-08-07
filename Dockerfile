@@ -67,13 +67,9 @@ COPY frontend/nginx.conf /etc/nginx/nginx.conf
 # ------------------------------------
 COPY script/move-to-nas.sh /script/move-to-nas.sh
 COPY script/cronfile /etc/cron.d/move-cron
-COPY script/entrypoint.sh /entrypoint.sh
 
 # Make shell script executable
 RUN chmod +x /script/move-to-nas.sh
-
-# Make shell script executable
-RUN chmod +x /entrypoint.sh
 
 # Set correct permissions for cron job file
 RUN chmod 0644 /etc/cron.d/move-cron
@@ -89,4 +85,13 @@ EXPOSE 5000
 # ----------------------------------
 # Final CMD: Start cron, backend & nginx
 # ----------------------------------
-CMD ["/entrypoint.sh"]
+# ✅ Directly run startup logic inside CMD
+CMD /bin/sh -c '\
+  echo "📌 Starting cron daemon..." && \
+  cron && \
+  echo "📌 Starting backend..." && \
+  node ./backend/server.js & \
+  echo "📌 Starting nginx..." && \
+  nginx -g "daemon off;" \
+'
+
