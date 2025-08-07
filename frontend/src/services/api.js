@@ -2,8 +2,8 @@ import axios from "axios";
 
 export const API_URL =
   process.env.REACT_APP_API_URL || "https://192.168.103.158:5003/api";
-  
-  // "https://192.168.101.47:5000/api";
+
+// "https://192.168.101.47:5000/api";
 
 // 'http://localhost:5000/api';
 
@@ -26,7 +26,9 @@ const api = axios.create({
 export const testBackendConnection = async () => {
   try {
     console.log("Testing backend connection to:", API_URL);
-    const response = await axios.get(`${API_URL.replace('/api', '')}/health`, { timeout: 5000 });
+    const response = await axios.get(`${API_URL.replace("/api", "")}/health`, {
+      timeout: 5000,
+    });
     console.log("Backend is reachable:", response.status);
     return true;
   } catch (error) {
@@ -71,16 +73,16 @@ export const authAPI = {
       password: "***", // Don't log the actual password
     });
     console.log("API URL being used:", API_URL);
-    
+
     // Try different possible login endpoints
     const loginEndpoints = [
       "/auth/login",
-      "/api/auth/login", 
+      "/api/auth/login",
       "/doctor/login",
       "/api/doctor/login",
-      "/login"
+      "/login",
     ];
-    
+
     for (const endpoint of loginEndpoints) {
       try {
         console.log(`Trying login endpoint: ${endpoint}`);
@@ -102,21 +104,30 @@ export const authAPI = {
         localStorage.setItem("user", JSON.stringify(response.data.user));
         return response;
       } catch (error) {
-        console.log(`Endpoint ${endpoint} failed:`, error.response?.status, error.response?.statusText);
+        console.log(
+          `Endpoint ${endpoint} failed:`,
+          error.response?.status,
+          error.response?.statusText
+        );
         if (error.response?.status === 404) {
           continue; // Try next endpoint
         }
         // If it's not a 404, it might be a different error (like 401, 500, etc.)
-        console.error("Login API error:", error.response?.data || error.message);
+        console.error(
+          "Login API error:",
+          error.response?.data || error.message
+        );
         if (error.response?.data?.message) {
           throw new Error(error.response.data.message);
         }
         throw error;
       }
     }
-    
+
     // If all endpoints failed
-    throw new Error("Login failed: No valid login endpoint found. Please check your backend configuration.");
+    throw new Error(
+      "Login failed: No valid login endpoint found. Please check your backend configuration."
+    );
   },
   register: (data) => api.post("/auth/register", data),
   getCurrentUser: () => api.get("/auth/me"),
@@ -132,7 +143,10 @@ export const authAPI = {
       console.log("Change password response:", response.data);
       return response;
     } catch (error) {
-      console.error("Change password API error:", error.response?.data || error.message);
+      console.error(
+        "Change password API error:",
+        error.response?.data || error.message
+      );
       if (error.response?.data?.message) {
         throw new Error(error.response.data.message);
       }
