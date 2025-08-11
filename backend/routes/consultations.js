@@ -248,26 +248,39 @@ router.get('/uhId/:uhId', protect, async (req, res) => {
   res.json(consultation);
 });
 
-// Update consultation
+// Update consultation — anyone logged-in can update any field
 router.put('/:id', protect, async (req, res) => {
   try {
-    const consultation = await Consultation.findById(req.params.id);
-    if (!consultation) return res.status(404).json({ success: false, message: 'Consultation not found' });
-
-    if (consultation.doctor.toString() !== req.user.id) {
-      return res.status(401).json({ success: false, message: 'Not authorized' });
+    // 1) ID validate
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ success: false, message: 'Invalid ID' });
     }
 
-    const updatedConsultation = await Consultation.findByIdAndUpdate(
-      req.params.id, { $set: req.body }, { new: true, runValidators: true }
+    // 2) Consultation exists?
+    const consultation = await Consultation.findById(req.params.id);
+    if (!consultation) {
+      return res.status(404).json({ success: false, message: 'Consultation not found' });
+    }
+
+    // 3) Direct update with all fields from req.body
+    const updated = await Consultation.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body, updatedAt: new Date() },
+      { new: true, runValidators: true }
     );
 
-    res.json({ success: true, data: updatedConsultation });
+    return res.json({ success: true, data: updated });
   } catch (error) {
     console.error('Error updating consultation:', error);
-    res.status(500).json({ success: false, message: 'Server error', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
+
+
 
 // Delete consultation
 router.delete('/:id', authorize('doctor', 'admin'), async (req, res) => {
