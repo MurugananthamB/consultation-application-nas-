@@ -3,4 +3,9 @@
   publish = "build"
 
 [build.environment]
-  NODE_VERSION = "18"   # optional - உங்கள் project local-ல் எந்த node version use பண்ணுகிறீர்களோ அதையே lock பண்ணுங்க (16/18/20)
+  NODE_VERSION = "18"   
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
