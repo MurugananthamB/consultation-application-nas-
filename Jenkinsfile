@@ -2,8 +2,10 @@ pipeline {
   agent any
   environment {
     REGISTRY_URL    = 'https://ghcr.io'
-    GH_NAMESPACE    = 'murugananthamb'   // github username (lowercase)
+    GH_NAMESPACE    = 'murugananthamb'     // github username (lowercase for image path)
     DOCKER_BUILDKIT = '1'
+    GIT_CRED_ID     = 'ghcr-cred'          // <-- reuse this for GHCR push + git tag push
+    GH_OWNER        = 'MurugananthamB'     // GitHub owner (case as in GitHub)
   }
   options { timestamps() }
 
@@ -14,12 +16,12 @@ pipeline {
       when { anyOf { branch 'main'; branch 'development' } }
       steps {
         script {
-          // ---- repo name (raw + sanitized for image) ----
+          // ---- repo name (raw for GitHub, sanitized for image) ----
           def rawRepo   = sh(returnStdout:true,
                              script:"basename -s .git \$(git config --get remote.origin.url)").trim()
           def imageRepo = rawRepo.toLowerCase()
-          imageRepo = imageRepo.replaceAll('[^a-z0-9._-]','')         // allow only valid chars
-                               .replaceAll('^[-._]+|[-._]+$','')       // strip leading/trailing - . _
+                                 .replaceAll('[^a-z0-9._-]','')
+                                 .replaceAll('^[-._]+|[-._]+$','')
           if (!imageRepo) { error "Invalid repo '${rawRepo}' → cannot derive image name. Set IMAGE_NAME manually." }
 
           def IMAGE    = "ghcr.io/${GH_NAMESPACE}/${imageRepo}"
@@ -42,8 +44,8 @@ pipeline {
 
           echo "Building ${IMAGE}:${primary} (git repo: ${rawRepo})"
 
-          withDockerRegistry([url: REGISTRY_URL, credentialsId: 'ghcr-cred']) {
-            def img = docker.build("${IMAGE}:${primary}", '.')    // Dockerfile at repo root
+          withDockerRegistry([url: REGISTRY_URL, credentialsId: env.GIT_CRED_ID]) {
+            def img = docker.build("${IMAGE}:${primary}", '.')   // Dockerfile at repo root
 
             // extra tags
             tags.findAll{ it != primary }.each { t ->
@@ -53,14 +55,16 @@ pipeline {
             tags.each { t -> sh "docker push ${IMAGE}:${t}" }
           }
 
-          // ---- OPTIONAL: push git tag on MAIN (use rawRepo for GitHub) ----
+          // ---- push git tag on MAIN using same credentials ----
           if (env.BRANCH_NAME == 'main') {
-            withCredentials([usernamePassword(credentialsId: 'github-repo', usernameVariable: 'GH_USER', passwordVariable: 'GH_PAT')]) {
+            withCredentials([usernamePassword(credentialsId: env.GIT_CRED_ID,
+                                              usernameVariable: 'GH_USER',
+                                              passwordVariable: 'GH_PAT')]) {
               sh """
                 git config user.email "ci@jenkins"
                 git config user.name  "Jenkins CI"
                 git tag -a ${NEXT_VERSION} -m "Release ${NEXT_VERSION} from Jenkins"
-                git push https://${GH_USER}:${GH_PAT}@github.com/MurugananthamB/${rawRepo}.git ${NEXT_VERSION}
+                git push https://${GH_USER}:${GH_PAT}@github.com/${GH_OWNER}/${rawRepo}.git ${NEXT_VERSION}
               """
             }
           }
