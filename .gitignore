@@ -1,1 +1,3 @@
 *.tar
+# Local Netlify folder
+.netlify
